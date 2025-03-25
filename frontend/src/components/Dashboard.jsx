@@ -35,7 +35,7 @@
 
 //   const handleUpload = async (file) => {
 //     if (!file) return;
-    
+
 //     setLoading(true);
 //     setError("");
 //     setSummary("");
@@ -101,15 +101,15 @@
 //   return (
 //     <DashboardContainer>
 //       <UploadButton onUploadComplete={handleUpload} />
-      
+
 //       {loading && (
 //         <LoadingIndicator>Analyzing document...</LoadingIndicator>
 //       )}
-      
+
 //       {error && (
 //         <ErrorMessage>{error}</ErrorMessage>
 //       )}
-      
+
 //       {!loading && !error && (
 //         <>
 //           <Summarizer summary={summary} />
@@ -374,7 +374,7 @@ export default Dashboard;
 //   border-radius: 4px;
 //   cursor: pointer;
 //   font-size: 14px;
-  
+
 //   &:hover {
 //     background-color: #5a6268;
 //   }
@@ -411,19 +411,19 @@ export default Dashboard;
 
 //   const handleUpload = async (file) => {
 //     if (!file) return;
-  
+
 //     setLoading(true);
 //     setError("");
 //     setSummary("");
 //     setKeywords([]);
 //     setGraphUrl("");  // Ensure previous graph is cleared
-  
+
 //     try {
 //       // Handle summary request
 //       const summaryFormData = new FormData();
 //       summaryFormData.append("file", file);
 //       summaryFormData.append("word_limit", 150);
-  
+
 //       const summaryResponse = await fetch("http://127.0.0.1:5000/api/summarize-pdf", {
 //         method: "POST",
 //         body: summaryFormData,
@@ -433,17 +433,17 @@ export default Dashboard;
 //           Accept: "application/json",
 //         },
 //       });
-  
+
 //       if (!summaryResponse.ok) {
 //         throw new Error(`Server responded with status: ${summaryResponse.status}`);
 //       }
-  
+
 //       const summaryData = await summaryResponse.json();
-  
+
 //       // Handle keywords request
 //       const keywordFormData = new FormData();
 //       keywordFormData.append("pdf", file);
-  
+
 //       const keywordResponse = await fetch("http://127.0.0.1:5000/api/keywords/", {
 //         method: "POST",
 //         body: keywordFormData,
@@ -453,17 +453,17 @@ export default Dashboard;
 //           Accept: "application/json",
 //         },
 //       });
-  
+
 //       if (!keywordResponse.ok) {
 //         throw new Error(`Server responded with status: ${keywordResponse.status}`);
 //       }
-  
+
 //       const keywordData = await keywordResponse.json();
-  
+
 //       // Handle table extraction
 //       const tableFormData = new FormData();
 //       tableFormData.append("pdf", file);
-  
+
 //       const tableResponse = await fetch("http://127.0.0.1:5000/api/table-extract", {
 //         method: "POST",
 //         body: tableFormData,
@@ -473,7 +473,7 @@ export default Dashboard;
 //           Accept: "application/json",
 //         },
 //       });
-  
+
 //       let graphUrl = "";
 //       if (tableResponse.ok) {
 //         if (tableResponse.headers.get("content-type").includes("image")) {
@@ -486,7 +486,7 @@ export default Dashboard;
 //           }
 //         }
 //       }
-  
+
 //       // Update state with results
 //       setSummary(summaryData.summary || "");
 //       setKeywords(keywordData.keywords || []);
@@ -498,7 +498,7 @@ export default Dashboard;
 //       setLoading(false);
 //     }
 //   };
-  
+
 
 //   const handleReset = () => {
 //     setSummary("");
@@ -519,20 +519,20 @@ export default Dashboard;
 //         <Features /> // Render Features component when no results are available
 //       )}
 //       {loading && <LoadingIndicator> <Spinner /></LoadingIndicator>}
-      
+
 //       {error && (
 //         <>
 //           <ErrorMessage>{error}</ErrorMessage>
 //           <ResetButton onClick={handleReset}>Try Again</ResetButton>
 //         </>
 //       )}
-      
+
 //       {hasResults && !loading && !error && (
 //         <>
 //           <PaperTitle file={uploadedFile} /> {/* Include PaperTitle component */}
 
 //           <Summarizer summary={summary} />
-          
+
 //           <FlexRow>
 //             <Column width={1}> 
 //               <Keywords keywords={keywords} />
@@ -541,8 +541,8 @@ export default Dashboard;
 //               {graphUrl && <Graph graphUrl={graphUrl} />}
 //             </Column>
 //           </FlexRow>
-          
-  
+
+
 //           <ResetButton onClick={handleReset}>Analyze Another Document</ResetButton>
 //         </>
 //       )}
@@ -659,7 +659,7 @@ export default Dashboard;
 //   font-size: 14px;
 //   font-family: "Montserrat", serif;
 //   font-weight: 200;
-  
+
 //   &:hover {
 //     background-color: #5a6268;
 //   }
@@ -805,19 +805,19 @@ export default Dashboard;
 //         <Features />
 //       )}
 //       {loading && <LoadingIndicator><Spinner /></LoadingIndicator>}
-      
+
 //       {error && (
 //         <>
 //           <ErrorMessage>{error}</ErrorMessage>
 //           <ResetButton onClick={handleReset}>Try Again</ResetButton>
 //         </>
 //       )}
-      
+
 //       {hasResults && !loading && !error && (
 //         <>
 //           <PaperTitle file={uploadedFile} /> {/* Include PaperTitle component */}
 //           <Summarizer summary={summary} />
-          
+
 //           <FlexRow>
 //             <Column width={1}> 
 //               <Keywords keywords={keywords} />
@@ -826,7 +826,7 @@ export default Dashboard;
 //               {graphUrl && <Graph graphUrl={graphUrl} />}
 //             </Column>
 //           </FlexRow>
-          
+
 //           <ResetButton onClick={handleReset}>Analyze Another Document</ResetButton>
 //         </>
 //       )}
@@ -866,16 +866,565 @@ export default Dashboard;
 
 
 
-// dashbaord trying to integrate the citations
-import React, { useState } from "react";
-import styled from "styled-components";
+// dashbaord trying to integrate the citations - working code 
+// import React, { useState } from "react";
+// import styled from "styled-components";
+// import UploadButton from "./UploadButton";
+// import Summarizer from "./Summarizer";
+// import Keywords from "./Keywords";
+// import Graph from "./Graph";
+// import Features from "./Features";
+// import PaperTitle from "./PaperTitle"; 
+// import Citations from "./Citations"; 
+
+// const FlexRow = styled.div`
+//   display: flex;
+//   margin-top: 20px;
+// `;
+
+// const Column = styled.div`
+//   flex: ${(props) => props.width || 1}; /* Default to 1 if no width is provided */
+//   display: flex;
+//   flex-direction: column;
+// `;
+
+// const DashboardContainer = styled.div`
+//   max-width: 900px;
+//   margin-left: ${({ isSidebarOpen }) => (isSidebarOpen ? '100px' : '100px')}; /* Conditional margin */
+//   padding: 20px;
+// `;
+
+// const LoadingIndicator = styled.div`
+//   text-align: center;
+//   margin: 20px 0;
+//   color: #666;
+// `;
+
+// const Spinner = styled.div`
+//   border: 8px solid rgba(255, 255, 255, 0.3); /* Light border */
+//   border-top: 8px solid #D2FF72; /* Color of the spinner */
+//   border-radius: 50%;
+//   width: 40px; /* Size of the spinner */
+//   height: 40px; /* Size of the spinner */
+//   margin: 0 auto; /* Center the spinner */
+//   margin-top: 200px;
+//   margin-left: 400px;
+// `;
+
+// const ErrorMessage = styled.div`
+//   color: #dc3545;
+//   background-color: #f8d7da;
+//   padding: 10px;
+//   border-radius: 4px;
+//   margin: 10px 0;
+// `;
+
+// const ResetButton = styled.button`
+//   margin-top: 20px;
+//   padding: 10px 30px;
+//   background-color: rgb(37, 37, 37);
+//   color: white;
+//   border: none;
+//   border-radius: 8px;
+//   cursor: pointer;
+//   font-size: 14px;
+//   font-family: "Montserrat", serif;
+//   font-weight: 200;
+
+//   &:hover {
+//     background-color: #5a6268;
+//   }
+// `;
+
+// const API_BASE_URL = 'http://127.0.0.1:5000';
+
+// const Dashboard = ({ isSidebarOpen }) => {
+//   const [summary, setSummary] = useState("");
+//   const [keywords, setKeywords] = useState([]);
+//   const [graphUrl, setGraphUrl] = useState(null);
+//   const [error, setError] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [uploadedFile, setUploadedFile] = useState(null); // State to hold the uploaded file
+
+//   const handleUpload = async (file) => {
+//     if (!file) return;
+
+//     setUploadedFile(file); // Set the uploaded file
+//     setLoading(true);
+//     setError("");
+//     setSummary("");
+//     setKeywords([]);
+//     setGraphUrl("");  // Ensure previous graph is cleared
+
+//     try {
+//       // Handle summary request
+//       const summaryFormData = new FormData();
+//       summaryFormData.append("file", file);
+//       summaryFormData.append("word_limit", 150);
+
+//       const summaryResponse = await fetch(`${API_BASE_URL}/api/summarize-pdf`, {
+//         method: "POST",
+//         body: summaryFormData,
+//         mode: "cors",
+//         credentials: "include",
+//         headers: {
+//           Accept: "application/json",
+//         },
+//       });
+
+//       if (!summaryResponse.ok) {
+//         throw new Error(`Server responded with status: ${summaryResponse.status}`);
+//       }
+
+//       const summaryData = await summaryResponse.json();
+
+//       // Handle keywords request
+//       const keywordFormData = new FormData();
+//       keywordFormData.append("pdf", file);
+
+//       const keywordResponse = await fetch(`${API_BASE_URL}/api/keywords/`, {
+//         method: "POST",
+//         body: keywordFormData,
+//         mode: "cors",
+//         credentials: "include",
+//         headers: {
+//           Accept: "application/json",
+//         },
+//       });
+
+//       if (!keywordResponse.ok) {
+//         throw new Error(`Server responded with status: ${keywordResponse.status}`);
+//       }
+
+//       const keywordData = await keywordResponse.json();
+
+//       // Handle table extraction
+//       const tableFormData = new FormData();
+//       tableFormData.append("pdf", file);
+
+//       const tableResponse = await fetch(`${API_BASE_URL}/api/table-extract`, {
+//         method: "POST",
+//         body: tableFormData,
+//         mode: "cors",
+//         credentials: "include",
+//         headers: {
+//           Accept: "application/json",
+//         },
+//       });
+
+//       let graphUrl = "";
+//       if (tableResponse.ok) {
+//         if (tableResponse.headers.get("content-type").includes("image")) {
+//           const blob = await tableResponse.blob();
+//           graphUrl = URL.createObjectURL(blob);
+//         } else {
+//           const tableData = await tableResponse.json();
+//           if (tableData.message === "No numeric data available for visualization") {
+//             graphUrl = "no-data"; // Custom value to indicate no graph
+//           }
+//         }
+//       }
+
+//       // Update state with results
+//       setSummary(summaryData.summary || "");
+//       setKeywords(keywordData.keywords || []);
+//       setGraphUrl(graphUrl); // Set graph URL or "no-data"
+//     } catch (error) {
+//       console.error("Error processing file:", error);
+//       setError(`Unable to process the document. ${error.message || "Please try again."}`);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleReset = () => {
+//     setSummary("");
+//     setKeywords([]);
+//     setGraphUrl(null);
+//     setError("");
+//     setUploadedFile(null); // Reset the uploaded file state
+//   };
+
+//   const hasResults = summary || keywords.length > 0 || graphUrl;
+
+//   return (
+//     <DashboardContainer isSidebarOpen={isSidebarOpen}>
+//       {!hasResults && !loading && (
+//         <UploadButton onUploadComplete={handleUpload} />
+//       )}
+
+//       {!hasResults && !loading && (
+//         <Features />
+//       )}
+//       {loading && <LoadingIndicator><Spinner /></LoadingIndicator>}
+
+//       {error && (
+//         <>
+//           <ErrorMessage>{error}</ErrorMessage>
+//           <ResetButton onClick={handleReset}>Try Again</ResetButton>
+//         </>
+//       )}
+
+//       {hasResults && !loading && !error && (
+//         <>
+//           <PaperTitle file={uploadedFile} /> {/* Include PaperTitle component */}
+//           <Summarizer summary={summary} />
+
+//           <FlexRow>
+//             <Column width={1}> 
+//               <Keywords keywords={keywords} />
+//             </Column>
+//             <Column width={2}>
+//               {graphUrl && <Graph graphUrl={graphUrl} />}
+//             </Column>
+//           </FlexRow>
+
+//           <Citations file={uploadedFile} /> {/* Include Citations component */}
+//           <ResetButton onClick={handleReset}>Analyze Another Document</ResetButton>
+//         </>
+//       )}
+//     </DashboardContainer>
+//   );
+// };
+
+// export default Dashboard;
+
+
+
+
+
+
+
+
+
+
+
+
+// import React, { useState, useEffect } from "react";
+// import styled, { keyframes } from "styled-components"; // Ensure keyframes is imported
+// import UploadButton from "./UploadButton";
+// import Summarizer from "./Summarizer";
+// import Keywords from "./Keywords";
+// import Graph from "./Graph";
+// import Features from "./Features";
+// import PaperTitle from "./PaperTitle";
+// import Citations from "./Citations";
+
+// // Define the spinning animation
+// const spin = keyframes`
+//   0% { transform: rotate(0deg); }
+//   100% { transform: rotate(360deg); }
+// `;
+
+// const FlexRow = styled.div`
+//   display: flex;
+//   margin-top: 20px;
+// `;
+
+// const Column = styled.div`
+//   flex: ${(props) => props.width || 1};
+//   display: flex;
+//   flex-direction: column;
+// `;
+
+// const DashboardContainer = styled.div`
+//   max-width: 900px;
+//   margin-left: ${({ $isSidebarOpen }) => ($isSidebarOpen ? '100px' : '100px')};
+//   padding: 20px;
+// `;
+
+// const LoadingIndicator = styled.div`
+//   text-align: center;
+//   margin: 20px 0;
+//   color: #666;
+//   position: relative;
+// `;
+
+// const Spinner = styled.div`
+//   border: 8px solid rgba(255, 255, 255, 0.3);
+//   border-top: 8px solid #D2FF72;
+//   border-radius: 50%;
+//   width: 40px;
+//   height: 40px;
+//   margin: 0 auto;
+//   margin-top: 200px;
+//   margin-left: 400px;
+//   animation: ${spin} 1s linear infinite; // Apply the spin animation
+// `;
+
+// const ErrorMessage = styled.div`
+//   color: #dc3545;
+//   background-color: #f8d7da;
+//   padding: 10px;
+//   border-radius: 4px;
+//   margin: 10px 0;
+// `;
+
+// const ResetButton = styled.button`
+//   margin-top: 20px;
+//   padding: 10px 30px;
+//   background-color: rgb(37, 37, 37);
+//   color: white;
+//   border: none;
+//   border-radius: 8px;
+//   cursor: pointer;
+//   font-size: 14px;
+//   font-family: "Montserrat", serif;
+//   font-weight: 200;
+//   &:hover {
+//     background-color: #5a6268;
+//   }
+// `;
+
+// const ChatSection = styled.div`
+//   margin-top: 20px;
+//   padding: 10px;
+//   background: #f0f0f0;
+//   border-radius: 8px;
+// `;
+
+// const ChatInput = styled.input`
+//   width: 70%;
+//   padding: 8px;
+//   margin-right: 10px;
+// `;
+
+// const ChatButton = styled.button`
+//   padding: 8px 16px;
+//   background-color: #D2FF72;
+//   border: none;
+//   border-radius: 4px;
+//   cursor: pointer;
+// `;
+
+// const ChatHistory = styled.div`
+//   max-height: 200px;
+//   overflow-y: auto;
+//   margin-top: 10px;
+// `;
+
+// const API_BASE_URL = 'http://127.0.0.1:5000';
+
+// const Dashboard = ({ isSidebarOpen }) => {
+//   const [summary, setSummary] = useState("");
+//   const [keywords, setKeywords] = useState([]);
+//   const [graphUrl, setGraphUrl] = useState(null);
+//   const [error, setError] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [uploadedFile, setUploadedFile] = useState(null);
+//   const [chatMessage, setChatMessage] = useState("");
+//   const [chatHistory, setChatHistory] = useState([]);
+//   const [userData, setUserData] = useState({ pdfs: [], chat_history: [], analysis: [] });
+
+//   const email = JSON.parse(localStorage.getItem("user"))?.email;
+
+//   useEffect(() => {
+//     if (email) fetchUserData();
+//   }, [email]);
+
+//   const fetchUserData = async () => {
+//     try {
+//       const response = await fetch(`${API_BASE_URL}/api/user-data?email=${email}`);
+//       const data = await response.json();
+//       setUserData(data);
+//       setChatHistory(data.chat_history);
+//     } catch (err) {
+//       console.error("Error fetching user data:", err);
+//     }
+//   };
+
+//   const handleUpload = async (file) => {
+//     if (!file || !email) return;
+
+//     setUploadedFile(file);
+//     setLoading(true);
+//     setError("");
+//     setSummary("");
+//     setKeywords([]);
+//     setGraphUrl("");
+
+//     try {
+//       const pdfId = Date.now().toString();
+//       const pdfData = { _id: pdfId, filename: file.name, uploadDate: new Date().toISOString() };
+
+//       const summaryFormData = new FormData();
+//       summaryFormData.append("file", file);
+//       summaryFormData.append("word_limit", 150);
+//       summaryFormData.append("email", email);
+//       const summaryResponse = await fetch(`${API_BASE_URL}/api/summarize-pdf`, {
+//         method: "POST",
+//         body: summaryFormData,
+//       });
+//       const summaryData = await summaryResponse.json();
+//       setSummary(summaryData.summary);
+
+//       const keywordFormData = new FormData();
+//       keywordFormData.append("pdf", file);
+//       keywordFormData.append("email", email);
+//       const keywordResponse = await fetch(`${API_BASE_URL}/api/keywords/`, {
+//         method: "POST",
+//         body: keywordFormData,
+//       });
+//       const keywordData = await keywordResponse.json();
+//       setKeywords(keywordData.keywords);
+
+//       const tableFormData = new FormData();
+//       tableFormData.append("pdf", file);
+//       const tableResponse = await fetch(`${API_BASE_URL}/api/table-extract`, {
+//         method: "POST",
+//         body: tableFormData,
+//       });
+//       let graphUrl = "";
+//       if (tableResponse.ok) {
+//         if (tableResponse.headers.get("content-type").includes("image")) {
+//           const blob = await tableResponse.blob();
+//           graphUrl = URL.createObjectURL(blob);
+//         } else {
+//           const tableData = await tableResponse.json();
+//           if (tableData.message === "No numeric data available for visualization") {
+//             graphUrl = "no-data";
+//           }
+//         }
+//       }
+//       setGraphUrl(graphUrl);
+
+//       const analysis = { pdf_id: pdfId, summary: summaryData.summary, keywords: keywordData.keywords };
+//       await fetch(`${API_BASE_URL}/api/user-data`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ email, pdf_data: pdfData, analysis }),
+//       });
+
+//       fetchUserData();
+//     } catch (error) {
+//       setError(`Unable to process the document. ${error.message || "Please try again."}`);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleChat = async () => {
+//     if (!uploadedFile || !email) return;
+
+//     try {
+//       const analysisData = {
+//         pdf_id: Date.now().toString(), // Example ID; use your logic
+//         filename: uploadedFile.name,
+//         title: "Extracted Title", // Replace with title_extractor result
+//         authors: ["Author 1"], // From title_extractor or citation_extractor
+//         citations: ["Cite 1"], // From citation_extractor
+//         citation_count: 10, // Example; calculate if possible
+//         recommendations: ["Paper A"], // From recommendation_bp
+//         summary: summary, // From summarizer_bp
+//         keywords: keywords, // From keywords_bp
+//         graphs: graphUrl ? [graphUrl] : [], // From table_extractor_bp
+//         tables: [] // From table_extractor_bp
+//       };
+
+//       const response = await fetch(`${API_BASE_URL}/api/paper-analysis`, {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({ email, analysis_data: analysisData })
+//       });
+//       if (!response.ok) throw new Error("Failed to save analysis");
+//       const data = await response.json();
+//       setChatHistory([...chatHistory, analysisData]); // Update local state if needed
+//       setChatMessage("");
+//     } catch (error) {
+//       console.error("Error saving analysis:", error);
+//       setError("Failed to save analysis");
+//     }
+//   };
+
+//   const handleReset = () => {
+//     setSummary("");
+//     setKeywords([]);
+//     setGraphUrl(null);
+//     setError("");
+//     setUploadedFile(null);
+//     setChatMessage("");
+//   };
+
+//   const hasResults = summary || keywords.length > 0 || graphUrl;
+
+//   return (
+//     <DashboardContainer $isSidebarOpen={isSidebarOpen}>
+//       {!hasResults && !loading && <UploadButton onUploadComplete={handleUpload} />}
+//       {!hasResults && !loading && <Features />}
+//       {loading && (
+//         <LoadingIndicator>
+//           <Spinner />
+//           {/* <p>Finding your research location...</p> */}
+//         </LoadingIndicator>
+//       )}
+//       {error && (
+//         <>
+//           <ErrorMessage>{error}</ErrorMessage>
+//           <ResetButton onClick={handleReset}>Try Again</ResetButton>
+//         </>
+//       )}
+//       {hasResults && !loading && !error && (
+//         <>
+//           <PaperTitle file={uploadedFile} />
+//           <Summarizer summary={summary} />
+//           <FlexRow>
+//             <Column width={1}>
+//               <Keywords keywords={keywords} />
+//             </Column>
+//             <Column width={2}>
+//               {graphUrl && <Graph graphUrl={graphUrl} />}
+//             </Column>
+//           </FlexRow>
+//           <Citations file={uploadedFile} />
+//           <ChatSection>
+//             <h3>Chat about this Paper</h3>
+//             <ChatInput
+//               value={chatMessage}
+//               onChange={(e) => setChatMessage(e.target.value)}
+//               placeholder="Ask a question about the paper"
+//             />
+//             <ChatButton onClick={handleChat}>Send</ChatButton>
+//             <ChatHistory>
+//               {chatHistory
+//                 .filter(ch => ch.pdf_id === userData.pdfs.find(p => p.filename === uploadedFile?.name)?._id)
+//                 .map((chat, i) => (
+//                   <div key={i}>
+//                     <p><strong>You:</strong> {chat.message}</p>
+//                     <p><strong>LLM:</strong> {chat.response}</p>
+//                   </div>
+//                 ))}
+//             </ChatHistory>
+//           </ChatSection>
+//           <ResetButton onClick={handleReset}>Analyze Another Document</ResetButton>
+//         </>
+//       )}
+//     </DashboardContainer>
+//   );
+// };
+
+// export default Dashboard;
+
+
+
+
+
+
+
+
+import React, { useState, useEffect } from "react";
+import styled, { keyframes } from "styled-components";
 import UploadButton from "./UploadButton";
 import Summarizer from "./Summarizer";
 import Keywords from "./Keywords";
 import Graph from "./Graph";
 import Features from "./Features";
-import PaperTitle from "./PaperTitle"; 
-import Citations from "./Citations"; 
+import PaperTitle from "./PaperTitle";
+import Citations from "./Citations";
+
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
 
 const FlexRow = styled.div`
   display: flex;
@@ -883,14 +1432,14 @@ const FlexRow = styled.div`
 `;
 
 const Column = styled.div`
-  flex: ${(props) => props.width || 1}; /* Default to 1 if no width is provided */
+  flex: ${(props) => props.width || 1};
   display: flex;
   flex-direction: column;
 `;
 
 const DashboardContainer = styled.div`
   max-width: 900px;
-  margin-left: ${({ isSidebarOpen }) => (isSidebarOpen ? '100px' : '100px')}; /* Conditional margin */
+  margin-left: ${({ $isSidebarOpen }) => ($isSidebarOpen ? "100px" : "100px")};
   padding: 20px;
 `;
 
@@ -901,14 +1450,13 @@ const LoadingIndicator = styled.div`
 `;
 
 const Spinner = styled.div`
-  border: 8px solid rgba(255, 255, 255, 0.3); /* Light border */
-  border-top: 8px solid #D2FF72; /* Color of the spinner */
+  border: 8px solid rgba(255, 255, 255, 0.3);
+  border-top: 8px solid #d2ff72;
   border-radius: 50%;
-  width: 40px; /* Size of the spinner */
-  height: 40px; /* Size of the spinner */
-  margin: 0 auto; /* Center the spinner */
-  margin-top: 200px;
-  margin-left: 400px;
+  width: 40px;
+  height: 40px;
+  margin: 200px auto 0 400px;
+  animation: ${spin} 1s linear infinite;
 `;
 
 const ErrorMessage = styled.div`
@@ -930,110 +1478,255 @@ const ResetButton = styled.button`
   font-size: 14px;
   font-family: "Montserrat", serif;
   font-weight: 200;
-  
   &:hover {
     background-color: #5a6268;
   }
 `;
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
+const ChatSection = styled.div`
+  margin-top: 20px;
+  padding: 10px;
+  background: #f0f0f0;
+  border-radius: 8px;
+`;
+
+const ChatInput = styled.input`
+  width: 70%;
+  padding: 8px;
+  margin-right: 10px;
+`;
+
+const ChatButton = styled.button`
+  padding: 8px 16px;
+  background-color: #d2ff72;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+`;
+
+const ChatHistory = styled.div`
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 10px;
+`;
+
+const API_BASE_URL = "http://127.0.0.1:5000";
 
 const Dashboard = ({ isSidebarOpen }) => {
   const [summary, setSummary] = useState("");
   const [keywords, setKeywords] = useState([]);
   const [graphUrl, setGraphUrl] = useState(null);
+  const [title, setTitle] = useState("");
+  const [citations, setCitations] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState(null); // State to hold the uploaded file
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [chatMessage, setChatMessage] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
+  const [userData, setUserData] = useState({
+    pdfs: [],
+    recent_analysis: null,
+    analysis: [],
+  });
 
-  const handleUpload = async (file) => {
-    if (!file) return;
+  const email = JSON.parse(localStorage.getItem("user"))?.email;
 
-    setUploadedFile(file); // Set the uploaded file
+  useEffect(() => {
+    if (email) fetchUserData();
+  }, [email]);
+
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/user-data?email=${email}`);
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      const data = await response.json();
+      setUserData(data);
+      setChatHistory(data.recent_analysis?.chat || []);
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+      setError("Couldn’t connect to the server. Please try again later.");
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!uploadedFile || !email) {
+      setError("Please upload a file and ensure you're logged in.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSummary("");
     setKeywords([]);
-    setGraphUrl("");  // Ensure previous graph is cleared
+    setGraphUrl(null);
+    setTitle("");
+    setCitations([]);
+    setRecommendations([]);
+    setChatHistory([]);
 
     try {
-      // Handle summary request
-      const summaryFormData = new FormData();
-      summaryFormData.append("file", file);
-      summaryFormData.append("word_limit", 150);
+      const pdfId = Date.now().toString();
 
+      // Summary
+      const summaryFormData = new FormData();
+      summaryFormData.append("file", uploadedFile);
+      summaryFormData.append("word_limit", 150);
+      summaryFormData.append("email", email);
       const summaryResponse = await fetch(`${API_BASE_URL}/api/summarize-pdf`, {
         method: "POST",
         body: summaryFormData,
-        mode: "cors",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-        },
       });
-
-      if (!summaryResponse.ok) {
-        throw new Error(`Server responded with status: ${summaryResponse.status}`);
-      }
-
+      if (!summaryResponse.ok) throw new Error("Failed to fetch summary");
       const summaryData = await summaryResponse.json();
+      setSummary(summaryData.summary);
 
-      // Handle keywords request
+      // Keywords
       const keywordFormData = new FormData();
-      keywordFormData.append("pdf", file);
-
+      keywordFormData.append("pdf", uploadedFile);
+      keywordFormData.append("email", email);
       const keywordResponse = await fetch(`${API_BASE_URL}/api/keywords/`, {
         method: "POST",
         body: keywordFormData,
-        mode: "cors",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-        },
       });
-
-      if (!keywordResponse.ok) {
-        throw new Error(`Server responded with status: ${keywordResponse.status}`);
-      }
-
+      if (!keywordResponse.ok) throw new Error("Failed to fetch keywords");
       const keywordData = await keywordResponse.json();
+      setKeywords(keywordData.keywords);
 
-      // Handle table extraction
+      // Graphs
       const tableFormData = new FormData();
-      tableFormData.append("pdf", file);
-
+      tableFormData.append("pdf", uploadedFile);
       const tableResponse = await fetch(`${API_BASE_URL}/api/table-extract`, {
         method: "POST",
         body: tableFormData,
-        mode: "cors",
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-        },
       });
-
       let graphUrl = "";
       if (tableResponse.ok) {
-        if (tableResponse.headers.get("content-type").includes("image")) {
+        if (tableResponse.headers.get("content-type")?.includes("image")) {
           const blob = await tableResponse.blob();
           graphUrl = URL.createObjectURL(blob);
         } else {
           const tableData = await tableResponse.json();
           if (tableData.message === "No numeric data available for visualization") {
-            graphUrl = "no-data"; // Custom value to indicate no graph
+            graphUrl = "no-data";
           }
         }
       }
+      setGraphUrl(graphUrl);
 
-      // Update state with results
-      setSummary(summaryData.summary || "");
-      setKeywords(keywordData.keywords || []);
-      setGraphUrl(graphUrl); // Set graph URL or "no-data"
+      // Title
+      const titleFormData = new FormData();
+      titleFormData.append("pdf", uploadedFile);
+      const titleResponse = await fetch(`${API_BASE_URL}/api/extract-title`, {
+        method: "POST",
+        body: titleFormData,
+      });
+      if (!titleResponse.ok) {
+        const errorData = await titleResponse.json();
+        throw new Error(`Failed to fetch title: ${errorData.error || titleResponse.status}`);
+      }
+      const titleData = await titleResponse.json();
+      console.log("🛠 Fetched title from backend:", titleData.title);
+      const extractedTitle = titleData.title && titleData.title !== "Title not found" && titleData.title.trim()
+        ? titleData.title
+        : "Untitled";
+      setTitle(extractedTitle);
+      console.log("📌 Extracted Title from Backend:", extractedTitle);
+
+
+      // Citations
+      const citationFormData = new FormData();
+      citationFormData.append("pdf", uploadedFile);
+      const citationResponse = await fetch(`${API_BASE_URL}/api/extract-citations`, {
+        method: "POST",
+        body: citationFormData,
+      });
+      const citationData = await citationResponse.json();
+      setCitations(citationData.citations || []);
+
+      // Recommendations
+      /* const recommendationFormData = new FormData();
+      recommendationFormData.append("pdf", uploadedFile);
+      const recommendationResponse = await fetch(`${API_BASE_URL}/api/recommend`, {
+        method: "POST",
+        body: recommendationFormData,
+      });
+      const recommendationData = await recommendationResponse.json();
+      setRecommendations(recommendationData.recommendations || []); */
+            setRecommendations([]);
+
+      // Save analysis
+      const analysisData = {
+        pdf_id: pdfId,
+        filename: uploadedFile.name,
+        title: extractedTitle,
+        summary: summaryData.summary || "Summary pending",
+        keywords: keywordData.keywords || [],
+        graphs: graphUrl && graphUrl !== "no-data" ? [graphUrl] : [],
+        citations: citationData.citations || [],
+        recommendations: recommendationData.recommendations || [],
+        chat: [],
+      };
+
+      console.log("🛠 Sending analysis to backend:", { email, analysis_data: analysisData });
+
+      const response = await fetch(`${API_BASE_URL}/api/paper-analysis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, analysis_data: analysisData }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to save analysis: ${errorData.error || response.status}`);
+      }
+
+      setChatHistory(analysisData.chat);
+      setUploadedFile(null);
+      window.dispatchEvent(new Event("analysisUpdated"));
     } catch (error) {
-      console.error("Error processing file:", error);
-      setError(`Unable to process the document. ${error.message || "Please try again."}`);
+      console.error("Error in handleUpload:", error);
+      setError(error.message || "Failed to process the file.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleChat = async () => {
+    if (!uploadedFile || !email || !chatMessage) return;
+
+    try {
+      const analysisData = {
+        pdf_id: Date.now().toString(),
+        filename: uploadedFile.name,
+        title: title || "Untitled",
+        summary: summary,
+        keywords: keywords,
+        graphs: graphUrl && graphUrl !== "no-data" ? [graphUrl] : [],
+        citations: citations,
+        recommendations: recommendations,
+        chat: [...chatHistory, { message: chatMessage, response: "Placeholder LLM response" }],
+      };
+
+      console.log("🛠 Sending chat analysis to backend:", { email, analysis_data: analysisData });
+
+      const response = await fetch(`${API_BASE_URL}/api/paper-analysis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, analysis_data: analysisData }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to save chat analysis: ${errorData.error || response.status}`);
+      }
+
+      setChatHistory(analysisData.chat);
+      setChatMessage("");
+      window.dispatchEvent(new Event("analysisUpdated"));
+    } catch (error) {
+      console.error("Error in handleChat:", error);
+      setError("Failed to save chat analysis");
     }
   };
 
@@ -1041,45 +1734,76 @@ const Dashboard = ({ isSidebarOpen }) => {
     setSummary("");
     setKeywords([]);
     setGraphUrl(null);
+    setTitle("");
+    setCitations([]);
+    setRecommendations([]);
     setError("");
-    setUploadedFile(null); // Reset the uploaded file state
+    setUploadedFile(null);
+    setChatMessage("");
+    setChatHistory([]);
   };
 
-  const hasResults = summary || keywords.length > 0 || graphUrl;
+  const hasResults =
+    summary ||
+    keywords.length > 0 ||
+    graphUrl ||
+    title ||
+    citations.length > 0 ||
+    recommendations.length > 0;
 
   return (
-    <DashboardContainer isSidebarOpen={isSidebarOpen}>
+    <DashboardContainer $isSidebarOpen={isSidebarOpen}>
       {!hasResults && !loading && (
-        <UploadButton onUploadComplete={handleUpload} />
+        <>
+          <UploadButton setUploadedFile={setUploadedFile} handleUpload={handleUpload} />
+          <Features />
+        </>
       )}
-
-      {!hasResults && !loading && (
-        <Features />
+      {loading && (
+        <LoadingIndicator>
+          <Spinner />
+        </LoadingIndicator>
       )}
-      {loading && <LoadingIndicator><Spinner /></LoadingIndicator>}
-      
       {error && (
         <>
           <ErrorMessage>{error}</ErrorMessage>
           <ResetButton onClick={handleReset}>Try Again</ResetButton>
         </>
       )}
-      
       {hasResults && !loading && !error && (
         <>
-          <PaperTitle file={uploadedFile} /> {/* Include PaperTitle component */}
+          <PaperTitle file={uploadedFile} title={title} />
           <Summarizer summary={summary} />
-          
           <FlexRow>
-            <Column width={1}> 
+            <Column width={1}>
               <Keywords keywords={keywords} />
             </Column>
             <Column width={2}>
-              {graphUrl && <Graph graphUrl={graphUrl} />}
+              {graphUrl && graphUrl !== "no-data" && <Graph graphUrl={graphUrl} />}
             </Column>
           </FlexRow>
-          
-          <Citations file={uploadedFile} /> {/* Include Citations component */}
+          <Citations citations={citations} />
+          <ChatSection>
+            <h3>Chat about this Paper</h3>
+            <ChatInput
+              value={chatMessage}
+              onChange={(e) => setChatMessage(e.target.value)}
+              placeholder="Ask a question about the paper"
+            />
+            <ChatButton onClick={handleChat}>Send</ChatButton>
+            <ChatHistory>
+              {chatHistory.length > 0 ? (
+                chatHistory.map((chat, i) => (
+                  <div key={i}>
+                    {chat.message && <p><strong>You:</strong> {chat.message}</p>}
+                    {chat.response && <p><strong>LLM:</strong> {chat.response}</p>}
+                  </div>
+                ))
+              ) : (
+                <p>No chat history yet</p>
+              )}
+            </ChatHistory>
+          </ChatSection>
           <ResetButton onClick={handleReset}>Analyze Another Document</ResetButton>
         </>
       )}

@@ -213,8 +213,8 @@
 
 
 
-
-#perplexity code for more keywords
+#perfect correctly owkring code
+# #perplexity code for more keywords
 import io
 import pdfplumber
 import re
@@ -272,3 +272,114 @@ def extract_keywords():
     results = analyze_text(text)
 
     return jsonify(results)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # integrating priti's model
+# import io
+# import pdfplumber
+# import re
+# import numpy as np
+# import os
+# import nltk
+# from nltk.tokenize import word_tokenize
+# from flask import Blueprint, request, jsonify
+# from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense, Embedding, LSTM  # Modify if needed
+
+# nltk.download("punkt")
+
+# keywords_bp = Blueprint("keywords", __name__)
+
+# # Paths
+# MODEL_DIR = "D:/Sakshi/Final Year Project/ddlm-backup/backend/models/trained_models/v1keyword_model.keras"
+# WEIGHTS_PATH = os.path.join(MODEL_DIR, "model.weights.h5")
+
+# # 🔹 Define Model Architecture (must match the trained model)
+# def build_model():
+#     model = Sequential([
+#         Embedding(input_dim=5000, output_dim=128, input_length=100),  # Modify as per original model
+#         LSTM(64, return_sequences=True),
+#         LSTM(32),
+#         Dense(16, activation="relu"),
+#         Dense(1, activation="sigmoid")  # Adjust for classification/regression
+#     ])
+#     model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
+#     return model
+
+# # 🔹 Load Model with Weights
+# def load_model():
+#     try:
+#         if not os.path.exists(WEIGHTS_PATH):
+#             raise FileNotFoundError(f"❌ Model weights file not found at {WEIGHTS_PATH}")
+
+#         model = build_model()  # Recreate model structure
+#         model.load_weights(WEIGHTS_PATH)  # Load weights
+#         print(f"✅ Model loaded successfully from {WEIGHTS_PATH}")
+#         return model
+
+#     except Exception as e:
+#         raise ValueError(f"❌ Failed to load model: {str(e)}")
+
+# # Load model at startup
+# keyword_model = load_model()
+
+# # 🔹 Preprocess text
+# def preprocess_text(text):
+#     text = re.sub(r"\s+", " ", text).strip().lower()
+#     tokens = word_tokenize(text)
+#     return text, tokens
+
+# # 🔹 Extract text from PDF
+# def process_pdf(pdf_data):
+#     with io.BytesIO(pdf_data) as pdf_file:
+#         with pdfplumber.open(pdf_file) as pdf:
+#             full_text = " ".join([page.extract_text() for page in pdf.pages if page.extract_text()])
+#     return preprocess_text(full_text)
+
+# # 🔹 Analyze text using the model
+# def analyze_text(text, tokens):
+#     if len(text) < 100:
+#         return {"keywords": []}
+
+#     model_input = np.array([text])  # Ensure input is in correct format
+#     predictions = keyword_model.predict(model_input)
+#     print(f"🔍 Model predictions: {predictions}")
+
+#     keywords = []
+#     threshold = 0.5
+#     for token, score in zip(tokens, predictions[0]):
+#         if isinstance(score, (list, tuple, np.ndarray)):
+#             score = score[0]
+#         if score > threshold and len(token) > 2:
+#             keywords.append(token)
+
+#     filtered_keywords = list(set(keywords))
+#     return {"keywords": filtered_keywords[:5]}
+
+# # 🔹 API route to extract keywords
+# @keywords_bp.route("/", methods=["POST"])
+# def extract_keywords():
+#     if "pdf" not in request.files:
+#         return jsonify({"error": "No PDF file uploaded"}), 400
+
+#     pdf_file = request.files["pdf"]
+#     pdf_data = pdf_file.read()
+
+#     text, tokens = process_pdf(pdf_data)
+#     results = analyze_text(text, tokens)
+
+#     return jsonify(results)

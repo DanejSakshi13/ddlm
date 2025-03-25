@@ -145,14 +145,81 @@
 
 
 
+//last working version, stopped bcz of sidebar dependencies
+// import React, { useState } from 'react';
+// import styled from 'styled-components';
+// import { ProSidebarProvider } from 'react-pro-sidebar'; // Import the provider
+// import Sidebar from '../components/Sidebar';
+// import Dashboard from '../components/Dashboard';
+
+// const SidebarWidth = 80; // Adjusted width for the sidebar
+
+// const HomePageContainer = styled.div`
+//   display: flex;
+//   height: 100vh;
+//   overflow: hidden;
+//   font-family: "Montserrat", serif;
+//   background-color: black;
+// `;
+
+// const MainContent = styled.div`
+//   flex: 1;
+//   margin-left: ${({ isSidebarOpen }) => (isSidebarOpen ? '0px' : '100px')}; /* Adjust margin based on sidebar state */
+//   transition: margin-left 0.3s ease;
+//   display: flex;
+//   flex-direction: column;
+//   width: 100%;
+// `;
+
+// const ContentWrapper = styled.div`
+//   flex: 1;
+//   display: flex;
+//   flex-direction: column;
+//   overflow-y: auto;
+// `;
+
+// const Home = () => {
+//   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+//   const toggleSidebar = () => {
+//     setIsSidebarOpen(!isSidebarOpen);
+//   };
+
+//   return (
+//     <ProSidebarProvider>
+//       <HomePageContainer>
+//         <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+//         <MainContent isSidebarOpen={isSidebarOpen}>
+//           <ContentWrapper>
+//             <Dashboard isSidebarOpen={isSidebarOpen} /> {/* Pass the sidebar state */}
+//           </ContentWrapper>
+//         </MainContent>
+//       </HomePageContainer>
+//     </ProSidebarProvider>
+//   );
+// };
+
+// export default Home;
+
+
+
+
+
+
+
+
+
+
+
+
 
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { ProSidebarProvider } from 'react-pro-sidebar'; // Import the provider
+import { ProSidebarProvider } from 'react-pro-sidebar'; // Use ProSidebarProvider instead of SidebarProvider
 import Sidebar from '../components/Sidebar';
 import Dashboard from '../components/Dashboard';
 
-const SidebarWidth = 80; // Adjusted width for the sidebar
+const SidebarWidth = 80;
 
 const HomePageContainer = styled.div`
   display: flex;
@@ -164,7 +231,7 @@ const HomePageContainer = styled.div`
 
 const MainContent = styled.div`
   flex: 1;
-  margin-left: ${({ isSidebarOpen }) => (isSidebarOpen ? '0px' : '100px')}; /* Adjust margin based on sidebar state */
+  margin-left: ${({ $isSidebarOpen }) => ($isSidebarOpen ? '0px' : '100px')}; /* Use transient prop */
   transition: margin-left 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -186,12 +253,12 @@ const Home = () => {
   };
 
   return (
-    <ProSidebarProvider>
+    <ProSidebarProvider> {/* Fixed to ProSidebarProvider */}
       <HomePageContainer>
         <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-        <MainContent isSidebarOpen={isSidebarOpen}>
+        <MainContent $isSidebarOpen={isSidebarOpen}>
           <ContentWrapper>
-            <Dashboard isSidebarOpen={isSidebarOpen} /> {/* Pass the sidebar state */}
+            <Dashboard isSidebarOpen={isSidebarOpen} />
           </ContentWrapper>
         </MainContent>
       </HomePageContainer>

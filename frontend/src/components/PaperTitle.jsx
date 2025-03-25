@@ -29,7 +29,7 @@ const TitleText = styled.span`
   font-size: 1rem;
 `;
 
-const PaperTitle = ({ file }) => {
+const PaperTitle = ({ title }) => {
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -75,9 +75,11 @@ const PaperTitle = ({ file }) => {
   return (
     <TitleContainer>
       <TitleLabel>Title:</TitleLabel>
-      {loading && <TitleText>Loading title...</TitleText>}
+      {/* {loading && <TitleText>Loading title...</TitleText>}
       {/* {error && <TitleText>{error}</TitleText>} Set color for error */}
-      {title && <TitleText color="#D2FF72">{title}</TitleText>}
+      {/* {title && <TitleText color="#D2FF72">{title}</TitleText>} */} */
+      {title ? <TitleText color="#D2FF72">{title}</TitleText> : <TitleText>Title not available</TitleText>}
+
     </TitleContainer>
   );
 };

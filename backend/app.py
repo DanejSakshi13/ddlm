@@ -399,8 +399,9 @@ def home():
             'extract-title': '/api/extract-title',
             'recommend': '/api/recommend',
             'extract-citations': '/api/extract-citations',
-            'signup': '/api/signup',  # Add this line
-            'login': '/api/login'      # Add this line
+            'signup': '/api/signup',  
+            'login': '/api/login',
+            'user-data': '/api/user-data'      
         }
     })
 

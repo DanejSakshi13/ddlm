@@ -106,32 +106,175 @@
 
 
 
-// ENHANCED
-// UploadButton.jsx
+// // ENHANCED
+// // UploadButton.jsx
+// import React, { useState, useRef } from 'react';
+// import styled from 'styled-components';
+// import CloudUploadIcon from '@mui/icons-material/CloudUpload'; // Importing an upload icon
+
+// const UploadContainer = styled.div`
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   height: 140px; /* Increased height for better spacing */
+//   flex-direction: column;
+//   background-color: #252525;
+//   // background: linear-gradient(135deg,#9ccfff,rgb(195, 217, 255)); /* Vibrant gradient background */
+//   box-shadow: 0 10px 10px rgba(0, 0, 0, 0.3);
+//   font-family: "Montserrat", serif;
+//   width: 80%;
+//   border: 0.5px #5f5f5f solid;
+//   margin: 5% auto; /* Center the container */
+//   border-radius: 10px; /* Rounded corners */
+//   padding: 40px; /* Padding for inner spacing */
+//   position: relative; /* For positioning the animated effect */
+//   overflow: hidden; /* Hide overflow for the animated effect */
+//   transition: transform 0.3s ease; /* Smooth scaling effect */
+//   &:hover {
+//     transform: scale(1.05); /* Scale up on hover */
+//   }
+// `;
+
+// const HiddenInput = styled.input`
+//   display: none;
+// `;
+
+// const StyledButton = styled.label`
+//   display: flex;
+//   align-items: center; /* Center the icon and text vertically */
+//   padding: 15px 30px;
+//   background-color: #D2FF72; /* Semi-transparent white */
+//   color: #333;
+//   border: none;
+//   border-radius: 30px;
+//   cursor: pointer;
+//   height:28px;
+//   font-size: 15px;
+//   font-weight: 600;
+//   transition: background-color 0.3s, transform 0.3s; /* Smooth transition */
+//   margin-top: 10px;
+//   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Button shadow */
+  
+//   &:hover {
+//     background-color:  #D2FF72; /* Fully white on hover */
+//     transform: translateY(-3px); /* Lift effect on hover */
+//   }
+
+//   &:disabled {
+//     background-color: #cccccc;
+//     cursor: not-allowed;
+//   }
+// `;
+
+// const UploadMessage = styled.p`
+//   font-size: 18px;
+//   text-align: center;
+//   margin-bottom: 20px; /* Space between message and button */
+//   color: #ffffff; /* White text for better contrast */
+//   // font-weight: bold; /* Bold text */
+// `;
+
+// const AnimatedEffect = styled.div`
+//   position: absolute;
+//   top: 0;
+//   left: 0;
+//   width: 100%;
+//   height: 100%;
+//   background: rgba(255, 255, 255, 0.2); /* Light overlay */
+//   border-radius: 20px; /* Match the container's border radius */
+//   opacity: 0;
+//   transition: opacity 0.3s ease; /* Smooth transition for the overlay */
+  
+//   ${StyledButton}:hover & {
+//     opacity: 1; /* Show overlay on button hover */
+//   }
+// `;
+
+// const UploadButton = ({ onUploadComplete }) => {
+//   const [loading, setLoading] = useState(false);
+//   const inputRef = useRef(null);
+
+//   const handleFileChange = async (event) => {
+//     const file = event.target.files?.[0];
+//     if (!file) return;
+
+//     setLoading(true);
+//     try {
+//       await onUploadComplete(file);
+//     } catch (error) {
+//       console.error("Error handling file upload:", error);
+//     } finally {
+//       setLoading(false);
+//       // Reset the input
+//       if (inputRef.current) {
+//         inputRef.current.value = '';
+//       }
+//     }
+//   };
+
+//   return (
+//     <UploadContainer>
+//       <UploadMessage>
+//         Upload Your Research Paper & Unlock Powerful Insights Instantly!
+//       </UploadMessage>
+      
+//       <HiddenInput 
+//         ref={inputRef}
+//         type="file" 
+//         id="fileUpload" 
+//         onChange={handleFileChange}
+//         accept=".pdf"
+//         disabled={loading}
+//       />
+      
+//       <StyledButton htmlFor="fileUpload" disabled={loading}>
+//         <CloudUploadIcon style={{ marginRight: '8px', fontSize: '30px' }} /> {/* Icon next to the text */}
+//         {loading ? "Analyzing..." : "Upload Document"}
+//         <AnimatedEffect /> {/* Animated overlay effect */}
+//       </StyledButton>
+//     </UploadContainer>
+//   );
+// };
+
+// export default UploadButton;
+
+
+
+
+
+
+
+
+// with spin  -attempt
 import React, { useState, useRef } from 'react';
-import styled from 'styled-components';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload'; // Importing an upload icon
+import styled, { keyframes } from 'styled-components';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+
+// Define the spinning animation
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
 
 const UploadContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 140px; /* Increased height for better spacing */
+  height: 140px;
   flex-direction: column;
   background-color: #252525;
-  // background: linear-gradient(135deg,#9ccfff,rgb(195, 217, 255)); /* Vibrant gradient background */
   box-shadow: 0 10px 10px rgba(0, 0, 0, 0.3);
   font-family: "Montserrat", serif;
   width: 80%;
   border: 0.5px #5f5f5f solid;
-  margin: 5% auto; /* Center the container */
-  border-radius: 10px; /* Rounded corners */
-  padding: 40px; /* Padding for inner spacing */
-  position: relative; /* For positioning the animated effect */
-  overflow: hidden; /* Hide overflow for the animated effect */
-  transition: transform 0.3s ease; /* Smooth scaling effect */
+  margin: 5% auto;
+  border-radius: 10px;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease;
   &:hover {
-    transform: scale(1.05); /* Scale up on hover */
+    transform: scale(1.05);
   }
 `;
 
@@ -141,23 +284,23 @@ const HiddenInput = styled.input`
 
 const StyledButton = styled.label`
   display: flex;
-  align-items: center; /* Center the icon and text vertically */
+  align-items: center;
   padding: 15px 30px;
-  background-color: #D2FF72; /* Semi-transparent white */
+  background-color: #D2FF72;
   color: #333;
   border: none;
   border-radius: 30px;
   cursor: pointer;
-  height:28px;
+  height: 28px;
   font-size: 15px;
   font-weight: 600;
-  transition: background-color 0.3s, transform 0.3s; /* Smooth transition */
+  transition: background-color 0.3s, transform 0.3s;
   margin-top: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Button shadow */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   
   &:hover {
-    background-color:  #D2FF72; /* Fully white on hover */
-    transform: translateY(-3px); /* Lift effect on hover */
+    background-color: #D2FF72;
+    transform: translateY(-3px);
   }
 
   &:disabled {
@@ -169,9 +312,8 @@ const StyledButton = styled.label`
 const UploadMessage = styled.p`
   font-size: 18px;
   text-align: center;
-  margin-bottom: 20px; /* Space between message and button */
-  color: #ffffff; /* White text for better contrast */
-  // font-weight: bold; /* Bold text */
+  margin-bottom: 20px;
+  color: #ffffff;
 `;
 
 const AnimatedEffect = styled.div`
@@ -180,17 +322,27 @@ const AnimatedEffect = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.2); /* Light overlay */
-  border-radius: 20px; /* Match the container's border radius */
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
   opacity: 0;
-  transition: opacity 0.3s ease; /* Smooth transition for the overlay */
+  transition: opacity 0.3s ease;
   
   ${StyledButton}:hover & {
-    opacity: 1; /* Show overlay on button hover */
+    opacity: 1;
   }
 `;
 
-const UploadButton = ({ onUploadComplete }) => {
+const Spinner = styled.div`
+  width: 24px;
+  height: 24px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #D2FF72;
+  border-radius: 50%;
+  animation: ${spin} 1s linear infinite; /* Ensure animation is applied */
+  margin-right: 8px;
+`;
+
+const UploadButton = ({ setUploadedFile, handleUpload }) => {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
 
@@ -200,15 +352,15 @@ const UploadButton = ({ onUploadComplete }) => {
 
     setLoading(true);
     try {
-      await onUploadComplete(file);
+      console.log("Starting upload...");
+      setUploadedFile(file); // Set file in Dashboard state
+      await handleUpload();  // Call Dashboard’s handleUpload
+      console.log("Upload completed.");
     } catch (error) {
       console.error("Error handling file upload:", error);
     } finally {
       setLoading(false);
-      // Reset the input
-      if (inputRef.current) {
-        inputRef.current.value = '';
-      }
+      if (inputRef.current) inputRef.current.value = "";
     }
   };
 
@@ -228,17 +380,21 @@ const UploadButton = ({ onUploadComplete }) => {
       />
       
       <StyledButton htmlFor="fileUpload" disabled={loading}>
-        <CloudUploadIcon style={{ marginRight: '8px', fontSize: '30px' }} /> {/* Icon next to the text */}
-        {loading ? "Analyzing..." : "Upload Document"}
-        <AnimatedEffect /> {/* Animated overlay effect */}
+        {loading ? (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Spinner />
+            Analyzing...
+          </div>
+        ) : (
+          <>
+            <CloudUploadIcon style={{ marginRight: '8px', fontSize: '30px' }} />
+            Upload Document
+          </>
+        )}
+        <AnimatedEffect />
       </StyledButton>
     </UploadContainer>
   );
 };
 
 export default UploadButton;
-
-
-
-
-

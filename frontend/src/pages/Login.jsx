@@ -79,17 +79,20 @@ const Login = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
+        console.log("Login response:", data); // Debug backend response
         localStorage.setItem("user", JSON.stringify(data.user));
-        navigate('/home'); // Redirect to home page on success
+        console.log("Stored user:", localStorage.getItem("user")); // Debug localStorage
+        navigate('/home');
       } else {
         const data = await response.json();
         setError(data.error);
       }
     } catch (err) {
       setError('An error occurred.');
+      console.error("Login error:", err); // Debug fetch error
     }
   };
 
