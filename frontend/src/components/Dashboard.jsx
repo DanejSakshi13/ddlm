@@ -1411,6 +1411,10 @@ export default Dashboard;
 
 
 
+
+
+
+
 import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import UploadButton from "./UploadButton";
@@ -1512,7 +1516,7 @@ const ChatHistory = styled.div`
 
 const API_BASE_URL = "http://127.0.0.1:5000";
 
-const Dashboard = ({ isSidebarOpen }) => {
+const Dashboard = ({ isSidebarOpen, selectedAnalysis }) => {
   const [summary, setSummary] = useState("");
   const [keywords, setKeywords] = useState([]);
   const [graphUrl, setGraphUrl] = useState(null);
@@ -1533,14 +1537,43 @@ const Dashboard = ({ isSidebarOpen }) => {
   const email = JSON.parse(localStorage.getItem("user"))?.email;
 
   useEffect(() => {
-    if (email) fetchUserData();
+    if (email) {
+      console.log("Fetching user data for email:", email);
+      fetchUserData();
+    } else {
+      console.warn("No email found in localStorage");
+    }
   }, [email]);
+
+  useEffect(() => {
+    if (selectedAnalysis) {
+      console.log("Displaying selected analysis:", selectedAnalysis);
+      setTitle(selectedAnalysis.title || "Untitled");
+      setSummary(selectedAnalysis.summary || "");
+      setKeywords(selectedAnalysis.keywords || []);
+      setGraphUrl(selectedAnalysis.graphs?.[0] || null);
+      setCitations(selectedAnalysis.citations || []);
+      setRecommendations(selectedAnalysis.recommendations || []);
+      setChatHistory(selectedAnalysis.chat || []);
+      setError("");
+      setLoading(false);
+      setUploadedFile(null);
+    }
+  }, [selectedAnalysis]);
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/user-data?email=${email}`);
-      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      const url = `${API_BASE_URL}/api/user-data?email=${encodeURIComponent(email)}`;
+      console.log("Fetching from URL:", url);
+      const response = await fetch(url, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error: ${response.status} - ${errorText}`);
+      }
       const data = await response.json();
+      console.log("User data fetched:", data);
       setUserData(data);
       setChatHistory(data.recent_analysis?.chat || []);
     } catch (err) {
@@ -1568,7 +1601,7 @@ const Dashboard = ({ isSidebarOpen }) => {
     try {
       const pdfId = Date.now().toString();
 
-      // Summary
+      console.log("Fetching summary...");
       const summaryFormData = new FormData();
       summaryFormData.append("file", uploadedFile);
       summaryFormData.append("word_limit", 150);
@@ -1576,29 +1609,40 @@ const Dashboard = ({ isSidebarOpen }) => {
       const summaryResponse = await fetch(`${API_BASE_URL}/api/summarize-pdf`, {
         method: "POST",
         body: summaryFormData,
+        credentials: "include",
       });
-      if (!summaryResponse.ok) throw new Error("Failed to fetch summary");
+      if (!summaryResponse.ok) {
+        const errorText = await summaryResponse.text();
+        throw new Error(`Failed to fetch summary: ${summaryResponse.status} - ${errorText}`);
+      }
       const summaryData = await summaryResponse.json();
+      console.log("Summary fetched:", summaryData);
       setSummary(summaryData.summary);
 
-      // Keywords
+      console.log("Fetching keywords...");
       const keywordFormData = new FormData();
       keywordFormData.append("pdf", uploadedFile);
       keywordFormData.append("email", email);
       const keywordResponse = await fetch(`${API_BASE_URL}/api/keywords/`, {
         method: "POST",
         body: keywordFormData,
+        credentials: "include",
       });
-      if (!keywordResponse.ok) throw new Error("Failed to fetch keywords");
+      if (!keywordResponse.ok) {
+        const errorText = await keywordResponse.text();
+        throw new Error(`Failed to fetch keywords: ${keywordResponse.status} - ${errorText}`);
+      }
       const keywordData = await keywordResponse.json();
+      console.log("Keywords fetched:", keywordData);
       setKeywords(keywordData.keywords);
 
-      // Graphs
+      console.log("Fetching graphs...");
       const tableFormData = new FormData();
       tableFormData.append("pdf", uploadedFile);
       const tableResponse = await fetch(`${API_BASE_URL}/api/table-extract`, {
         method: "POST",
         body: tableFormData,
+        credentials: "include",
       });
       let graphUrl = "";
       if (tableResponse.ok) {
@@ -1611,75 +1655,99 @@ const Dashboard = ({ isSidebarOpen }) => {
             graphUrl = "no-data";
           }
         }
+      } else {
+        console.warn(`Graph fetch failed but continuing: ${tableResponse.status}`);
       }
+      console.log("Graph URL set:", graphUrl);
       setGraphUrl(graphUrl);
 
-      // Title
+      console.log("Fetching title...");
       const titleFormData = new FormData();
-      titleFormData.append("pdf", uploadedFile);
-      const titleResponse = await fetch(`${API_BASE_URL}/api/extract-title`, {
-        method: "POST",
-        body: titleFormData,
-      });
-      if (!titleResponse.ok) {
-        const errorData = await titleResponse.json();
-        throw new Error(`Failed to fetch title: ${errorData.error || titleResponse.status}`);
+      titleFormData.append("file", uploadedFile);
+      let extractedTitle = "Untitled"; // Default value
+      try {
+        console.log("Sending title request to:", `${API_BASE_URL}/api/extract-title`);
+        const titleResponse = await fetch(`${API_BASE_URL}/api/extract-title`, {
+          method: "POST",
+          body: titleFormData,
+          credentials: "include",
+        });
+        if (!titleResponse.ok) {
+          const errorData = await titleResponse.json();
+          console.error("Title response error:", errorData);
+          throw new Error(`Failed to fetch title: ${titleResponse.status} - ${errorData.error || "Unknown error"}`);
+        }
+        const titleData = await titleResponse.json();
+        console.log("🛠 Full title response:", titleData);
+        extractedTitle = titleData.title && titleData.title !== "Title not found" && titleData.title.trim()
+          ? titleData.title
+          : "Untitled";
+        console.log("📌 Extracted Title from Backend:", extractedTitle);
+        setTitle(extractedTitle);
+      } catch (titleError) {
+        console.warn("Title fetch failed with:", titleError.message);
+        console.log("Request details:", { url: `${API_BASE_URL}/api/extract-title`, method: "POST", credentials: "include" });
+        setTitle(extractedTitle);
       }
-      const titleData = await titleResponse.json();
-      console.log("🛠 Fetched title from backend:", titleData.title);
-      const extractedTitle = titleData.title && titleData.title !== "Title not found" && titleData.title.trim()
-        ? titleData.title
-        : "Untitled";
-      setTitle(extractedTitle);
-      console.log("📌 Extracted Title from Backend:", extractedTitle);
 
-
-      // Citations
+      console.log("Fetching citations...");
       const citationFormData = new FormData();
-      citationFormData.append("pdf", uploadedFile);
-      const citationResponse = await fetch(`${API_BASE_URL}/api/extract-citations`, {
-        method: "POST",
-        body: citationFormData,
-      });
-      const citationData = await citationResponse.json();
-      setCitations(citationData.citations || []);
+      citationFormData.append("file", uploadedFile);
+      let fetchedCitations = [];
+      try {
+        console.log("Sending citation request to:", `${API_BASE_URL}/api/extract-citations`);
+        const citationResponse = await fetch(`${API_BASE_URL}/api/extract-citations`, {
+          method: "POST",
+          body: citationFormData,
+          credentials: "include",
+        });
+        if (!citationResponse.ok) {
+          const errorData = await citationResponse.text(); // Use text() to see raw response
+          console.error("Citation response error:", errorData);
+          throw new Error(`Failed to fetch citations: ${citationResponse.status} - ${errorData}`);
+        }
+        const citationData = await citationResponse.json();
+        console.log("Citations fetched:", citationData);
+        fetchedCitations = citationData.citations || [];
+        setCitations(fetchedCitations);
+      } catch (citationError) {
+        console.warn("Citations fetch failed, continuing:", citationError);
+        setCitations(fetchedCitations);
+      }
 
-      // Recommendations
-      /* const recommendationFormData = new FormData();
-      recommendationFormData.append("pdf", uploadedFile);
-      const recommendationResponse = await fetch(`${API_BASE_URL}/api/recommend`, {
-        method: "POST",
-        body: recommendationFormData,
-      });
-      const recommendationData = await recommendationResponse.json();
-      setRecommendations(recommendationData.recommendations || []); */
-            setRecommendations([]);
+      console.log("Setting recommendations (empty)...");
+      setRecommendations([]);
 
-      // Save analysis
+      console.log("Preparing analysis data...");
       const analysisData = {
         pdf_id: pdfId,
         filename: uploadedFile.name,
-        title: extractedTitle,
+        title: extractedTitle, // Use fetched title directly
         summary: summaryData.summary || "Summary pending",
         keywords: keywordData.keywords || [],
         graphs: graphUrl && graphUrl !== "no-data" ? [graphUrl] : [],
-        citations: citationData.citations || [],
-        recommendations: recommendationData.recommendations || [],
+        citations: fetchedCitations,
+        recommendations: [],
         chat: [],
       };
+      console.log("Analysis data prepared:", analysisData);
 
+      console.log("Saving analysis...");
       console.log("🛠 Sending analysis to backend:", { email, analysis_data: analysisData });
 
       const response = await fetch(`${API_BASE_URL}/api/paper-analysis`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, analysis_data: analysisData }),
+        credentials: "include",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Failed to save analysis: ${errorData.error || response.status}`);
+        console.error("Failed to save analysis:", errorData);
+        throw new Error(`Failed to save analysis: ${response.status} - ${errorData.error || "Unknown error"}`);
       }
+      console.log("Analysis saved successfully");
 
       setChatHistory(analysisData.chat);
       setUploadedFile(null);
@@ -1693,7 +1761,10 @@ const Dashboard = ({ isSidebarOpen }) => {
   };
 
   const handleChat = async () => {
-    if (!uploadedFile || !email || !chatMessage) return;
+    if (!uploadedFile || !email || !chatMessage) {
+      setError("Upload a file, log in, and enter a message to chat.");
+      return;
+    }
 
     try {
       const analysisData = {
@@ -1714,11 +1785,12 @@ const Dashboard = ({ isSidebarOpen }) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, analysis_data: analysisData }),
+        credentials: "include",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Failed to save chat analysis: ${errorData.error || response.status}`);
+        throw new Error(`Failed to save chat analysis: ${response.status} - ${errorData.error || "Unknown error"}`);
       }
 
       setChatHistory(analysisData.chat);
@@ -1749,66 +1821,75 @@ const Dashboard = ({ isSidebarOpen }) => {
     graphUrl ||
     title ||
     citations.length > 0 ||
-    recommendations.length > 0;
+    recommendations.length > 0 ||
+    chatHistory.length > 0;
 
-  return (
-    <DashboardContainer $isSidebarOpen={isSidebarOpen}>
-      {!hasResults && !loading && (
-        <>
-          <UploadButton setUploadedFile={setUploadedFile} handleUpload={handleUpload} />
-          <Features />
-        </>
-      )}
-      {loading && (
-        <LoadingIndicator>
-          <Spinner />
-        </LoadingIndicator>
-      )}
-      {error && (
-        <>
-          <ErrorMessage>{error}</ErrorMessage>
-          <ResetButton onClick={handleReset}>Try Again</ResetButton>
-        </>
-      )}
-      {hasResults && !loading && !error && (
-        <>
-          <PaperTitle file={uploadedFile} title={title} />
-          <Summarizer summary={summary} />
-          <FlexRow>
-            <Column width={1}>
-              <Keywords keywords={keywords} />
-            </Column>
-            <Column width={2}>
-              {graphUrl && graphUrl !== "no-data" && <Graph graphUrl={graphUrl} />}
-            </Column>
-          </FlexRow>
-          <Citations citations={citations} />
-          <ChatSection>
-            <h3>Chat about this Paper</h3>
-            <ChatInput
-              value={chatMessage}
-              onChange={(e) => setChatMessage(e.target.value)}
-              placeholder="Ask a question about the paper"
-            />
-            <ChatButton onClick={handleChat}>Send</ChatButton>
-            <ChatHistory>
-              {chatHistory.length > 0 ? (
-                chatHistory.map((chat, i) => (
-                  <div key={i}>
-                    {chat.message && <p><strong>You:</strong> {chat.message}</p>}
-                    {chat.response && <p><strong>LLM:</strong> {chat.response}</p>}
-                  </div>
-                ))
-              ) : (
-                <p>No chat history yet</p>
-              )}
-            </ChatHistory>
-          </ChatSection>
-          <ResetButton onClick={handleReset}>Analyze Another Document</ResetButton>
-        </>
-      )}
-    </DashboardContainer>
-  );
+  console.log("State before render:", { summary, keywords, graphUrl, title, citations, loading, error, hasResults });
+
+  try {
+    console.log("Rendering Dashboard");
+    return (
+      <DashboardContainer $isSidebarOpen={isSidebarOpen}>
+        {!hasResults && !loading && (
+          <>
+            <UploadButton setUploadedFile={setUploadedFile} handleUpload={handleUpload} />
+            <Features />
+          </>
+        )}
+        {loading && (
+          <LoadingIndicator>
+            <Spinner />
+          </LoadingIndicator>
+        )}
+        {error && (
+          <>
+            <ErrorMessage>{error}</ErrorMessage>
+            <ResetButton onClick={handleReset}>Try Again</ResetButton>
+          </>
+        )}
+        {hasResults && !loading && !error && (
+          <>
+            <PaperTitle title={title} />
+            <Summarizer summary={summary} />
+            <FlexRow>
+              <Column width={1}>
+                <Keywords keywords={keywords} />
+              </Column>
+              <Column width={2}>
+                {graphUrl && graphUrl !== "no-data" && <Graph graphUrl={graphUrl} />}
+              </Column>
+            </FlexRow>
+            <Citations citations={citations} />
+            <ChatSection>
+              <h3>Chat about this Paper</h3>
+              <ChatInput
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+                placeholder="Ask a question about the paper"
+              />
+              <ChatButton onClick={handleChat}>Send</ChatButton>
+              <ChatHistory>
+                {chatHistory.length > 0 ? (
+                  chatHistory.map((chat, i) => (
+                    <div key={i}>
+                      {chat.message && <p><strong>You:</strong> {chat.message}</p>}
+                      {chat.response && <p><strong>LLM:</strong> {chat.response}</p>}
+                    </div>
+                  ))
+                ) : (
+                  <p>No chat history yet</p>
+                )}
+              </ChatHistory>
+            </ChatSection>
+            <ResetButton onClick={handleReset}>Analyze Another Document</ResetButton>
+          </>
+        )}
+      </DashboardContainer>
+    );
+  } catch (renderError) {
+    console.error("Render error in Dashboard:", renderError);
+    throw renderError; // Let ErrorBoundary catch it
+  }
 };
 
 export default Dashboard;

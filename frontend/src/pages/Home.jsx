@@ -213,11 +213,97 @@
 
 
 
+// import React, { useState } from 'react';
+// import styled from 'styled-components';
+// import { ProSidebarProvider } from 'react-pro-sidebar'; // Use ProSidebarProvider instead of SidebarProvider
+// import Sidebar from '../components/Sidebar';
+// import Dashboard from '../components/Dashboard';
+
+// const SidebarWidth = 80;
+
+// const HomePageContainer = styled.div`
+//   display: flex;
+//   height: 100vh;
+//   overflow: hidden;
+//   font-family: "Montserrat", serif;
+//   background-color: black;
+// `;
+
+// const MainContent = styled.div`
+//   flex: 1;
+//   margin-left: ${({ $isSidebarOpen }) => ($isSidebarOpen ? '0px' : '100px')}; /* Use transient prop */
+//   transition: margin-left 0.3s ease;
+//   display: flex;
+//   flex-direction: column;
+//   width: 100%;
+// `;
+
+// const ContentWrapper = styled.div`
+//   flex: 1;
+//   display: flex;
+//   flex-direction: column;
+//   overflow-y: auto;
+// `;
+
+// const Home = () => {
+//   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+//   const toggleSidebar = () => {
+//     setIsSidebarOpen(!isSidebarOpen);
+//   };
+
+//   return (
+//     <ProSidebarProvider> {/* Fixed to ProSidebarProvider */}
+//       <HomePageContainer>
+//         <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+//         <MainContent $isSidebarOpen={isSidebarOpen}>
+//           <ContentWrapper>
+//             <Dashboard isSidebarOpen={isSidebarOpen} />
+//           </ContentWrapper>
+//         </MainContent>
+//       </HomePageContainer>
+//     </ProSidebarProvider>
+//   );
+// };
+
+// export default Home;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// dashboard with error boundary
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { ProSidebarProvider } from 'react-pro-sidebar'; // Use ProSidebarProvider instead of SidebarProvider
+import { ProSidebarProvider } from 'react-pro-sidebar';
 import Sidebar from '../components/Sidebar';
 import Dashboard from '../components/Dashboard';
+import ErrorBoundary from '../components/ErrorBoundary'; // Adjust path
 
 const SidebarWidth = 80;
 
@@ -231,7 +317,7 @@ const HomePageContainer = styled.div`
 
 const MainContent = styled.div`
   flex: 1;
-  margin-left: ${({ $isSidebarOpen }) => ($isSidebarOpen ? '0px' : '100px')}; /* Use transient prop */
+  margin-left: ${({ $isSidebarOpen }) => ($isSidebarOpen ? '0px' : '100px')};
   transition: margin-left 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -247,18 +333,25 @@ const ContentWrapper = styled.div`
 
 const Home = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [selectedAnalysis, setSelectedAnalysis] = useState(null);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   return (
-    <ProSidebarProvider> {/* Fixed to ProSidebarProvider */}
+    <ProSidebarProvider>
       <HomePageContainer>
-        <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <Sidebar
+          isOpen={isSidebarOpen}
+          toggleSidebar={toggleSidebar}
+          setSelectedAnalysis={setSelectedAnalysis} // Pass to Sidebar
+        />
         <MainContent $isSidebarOpen={isSidebarOpen}>
           <ContentWrapper>
-            <Dashboard isSidebarOpen={isSidebarOpen} />
+            <ErrorBoundary>
+              <Dashboard isSidebarOpen={isSidebarOpen} selectedAnalysis={selectedAnalysis} />
+            </ErrorBoundary>
           </ContentWrapper>
         </MainContent>
       </HomePageContainer>

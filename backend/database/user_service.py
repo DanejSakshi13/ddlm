@@ -129,8 +129,6 @@
 
 
 
-
-
 from flask_pymongo import PyMongo
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -182,9 +180,7 @@ def verify_user(email, password):
     return None
 
 def save_paper_analysis(email, analysis_data):
-    """Save paper analysis in 'paper_analyses' and update user's recent_analyses with the latest ID."""
     db = mongo.db
-    
     analysis_entry = {
         "user_email": email,
         "pdf_id": analysis_data.get("pdf_id", str(ObjectId())),
@@ -198,24 +194,20 @@ def save_paper_analysis(email, analysis_data):
         "keywords": analysis_data.get("keywords", []),
         "graphs": analysis_data.get("graphs", []),
         "tables": analysis_data.get("tables", []),
-        "chat": analysis_data.get("chat", []),  # Add chat field
+        "chat": analysis_data.get("chat", []),
         "timestamp": datetime.utcnow()
     }
-    print("🛠 Saving analysis entry:", analysis_entry)
     analysis_result = db.paper_analyses.insert_one(analysis_entry)
-    analysis_id = analysis_result.inserted_id
+    analysis_id = str(analysis_result.inserted_id)  # Convert to string
     print("✅ Inserted analysis with ID:", analysis_id)
     
-    # Overwrite recent_analyses with only the latest ID
+    # Append the new analysis ID to recent_analyses
     update_result = db.users.update_one(
         {"email": email},
-        {"$set": {"recent_analyses": [analysis_id]}}
+        {"$push": {"recent_analyses": analysis_id}}
     )
     print(f"🛠 Update result: matched={update_result.matched_count}, modified={update_result.modified_count}")
-    print(f"✅ Updated recent_analyses for {email} with ID: {analysis_id}")
-
-
-
+    print(f"✅ Appended {analysis_id} to recent_analyses for {email}")
 
 def get_user_recent_analyses(email):
     """Retrieve the most recent paper analysis for the user."""
@@ -223,8 +215,20 @@ def get_user_recent_analyses(email):
     if not user or "recent_analyses" not in user or not user["recent_analyses"]:
         return None
     
-    analysis_id = user["recent_analyses"][0]  # Only one ID
-    analysis = mongo.db.paper_analyses.find_one({"_id": analysis_id})
-    if analysis:
-        analysis["_id"] = str(analysis["_id"])
-    return analysis
+    # Get the most recent analysis ID (last in the list)
+    analysis_id = user["recent_analyses"][-1]  # Get the latest analysis ID
+    
+    try:
+        # Fetch the actual analysis document from paper_analyses collection
+        analysis = mongo.db.paper_analyses.find_one({"_id": ObjectId(analysis_id)})
+        
+        if analysis:
+            # Convert ObjectId to string for JSON serialization
+            analysis['_id'] = str(analysis['_id'])
+            return analysis
+        
+        return None
+    
+    except Exception as e:
+        print(f"Error retrieving recent analysis: {e}")
+        return None

@@ -256,6 +256,12 @@
 
 
 
+
+
+
+
+
+
 #  attempt to prints all citations properly once
 from flask import Flask, Blueprint, request, jsonify
 import os
@@ -337,21 +343,16 @@ def extract_references(text): #LEAVES THE LAST CITATION
 
 
 
-
-
-
-
-
-
 # Function to extract citations from the PDF
 def extract_citations_from_pdf(file_path):
     try:
         text = extract_text_from_pdf(file_path)
+        print(f"Extracted text length: {len(text)}")  # Debug text length
         references = extract_references(text)
-
-        return references  # Return the list of references
-
+        print(f"Found {len(references)} references: {references}")  # Debug references
+        return references
     except Exception as e:
+        print(f"Error in citation extraction: {str(e)}")
         return str(e)
 
 # New API Route for Extracting Citations from PDFs
@@ -361,7 +362,6 @@ def extract_citations():
         return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files['file']
-
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
@@ -369,14 +369,13 @@ def extract_citations():
         file_path = os.path.join('uploads', file.filename)
         os.makedirs('uploads', exist_ok=True)
         file.save(file_path)
+        print(f"File saved: {file_path}")  # Debug file save
 
-        references = extract_citations_from_pdf(file_path)  # Extract the citations
-        
+        references = extract_citations_from_pdf(file_path)
         return jsonify({"citations": references}), 200
-
     except Exception as e:
+        print(f"Endpoint error: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
