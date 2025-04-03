@@ -194,6 +194,7 @@ def save_paper_analysis(email, analysis_data):
         "keywords": analysis_data.get("keywords", []),
         "graphs": analysis_data.get("graphs", []),
         "tables": analysis_data.get("tables", []),
+        "images": analysis_data.get("images", []),
         "chat": analysis_data.get("chat", []),
         "timestamp": datetime.utcnow()
     }

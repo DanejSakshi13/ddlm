@@ -334,6 +334,7 @@ const ContentWrapper = styled.div`
 const Home = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+  console.log("home - selectedAnalysis analysis", selectedAnalysis);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
