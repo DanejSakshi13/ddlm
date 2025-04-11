@@ -390,6 +390,7 @@ from models.title_extractor import title_extractor_bp
 from models.recommendation import recommendation_bp
 from models.citation_extractor import citation_extractor_bp
 from models.image_extractor import image_extractor_bp
+from models.author_extractor import author_extractor_bp  
 from routes.user_routes import user_bp
 from database.db import init_db
 from datetime import datetime
@@ -407,12 +408,7 @@ init_db(app)
 #     "supports_credentials": True
 # }})
 
-# CORS(app, resources={r"/api/*": {
-#     "origins": ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174"],
-#     "methods": ["GET", "POST", "OPTIONS"],
-#     "allow_headers": ["Content-Type", "Authorization"],
-#     "supports_credentials": True
-# }}, supports_credentials=True)  # Ensure supports_credentials is at the top level
+
 CORS(app, resources={r"/*": {
     "origins": ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174"],
     "methods": ["GET", "POST", "OPTIONS"],
@@ -431,6 +427,7 @@ def register_blueprints(app):
         (recommendation_bp, "/api/recommend"),
         (citation_extractor_bp, "/api"),
         (image_extractor_bp, "/api"),
+        (author_extractor_bp, "/api"),
         (user_bp, "/api"),
         (user_query_bp, "/api")  # Register the new blueprint
     ]
@@ -469,6 +466,7 @@ def home():
             'recommend': '/api/recommend',
             'extract-citations': '/api/extract-citations',
             'extract-images': '/api/extract-images',
+            'extract-authors': '/api/extract-authors',
             'signup': '/api/signup',
             'login': '/api/login',
             'user-data': '/api/user-data',
@@ -493,10 +491,12 @@ def after_request(response):
     print(f"Response Headers: {response.headers}")
     return response
 
+# if __name__ == "__main__":
+#     app.run(debug=True, host='127.0.0.1', port=5000)
+
+# Resolve the Socket Error
 if __name__ == "__main__":
-    app.run(debug=True, host='127.0.0.1', port=5000)
-
-
+    app.run(debug=False, host='127.0.0.1', port=5000)
 
 
 

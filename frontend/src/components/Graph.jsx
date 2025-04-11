@@ -1,17 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-// const GraphContainer = styled.div`
-// //   margin-top: 20px;
-//   text-align: center;
-//   margin-left:130px;
-//   background-color: #e3f2fd;
-//   border-radius: 8px;
-//   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-//     max-width: 80%;
-//     height:320px;
 
-// `;
 
 const GraphContainer = styled.div`
   text-align: center;
@@ -30,15 +20,6 @@ const GraphContainer = styled.div`
 
 `;
 
-
-// const GraphImage = styled.img`
-//   max-width: 90%;
-//   height: 75%;
-//   border: 1px solid #ccc;
-//   border-radius: 8px;
-//   // margin-top:15px;
-//     margin-bottom:15px;
-// `;
 
 const GraphImage = styled.img`
   max-width: 90%;

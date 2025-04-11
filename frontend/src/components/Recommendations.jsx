@@ -5,11 +5,14 @@ const RecommendationsContainer = styled.div`
   width: 95%;
   margin: 20px 0;
   padding: 20px;
-  background-color: #383838;
+  background-color:rgb(37, 37, 37);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  border: 0.5px #5f5f5f solid;
+  font-family: "Montserrat", serif;
+
 `;
 
 const RecommendationItem = styled.div`
@@ -28,7 +31,7 @@ const Title = styled.h3`
 
 const PaperTitle  = styled.p`
 margin-top: -2px;
-/* margin-bottom    : 8px; */
+margin-bottom: 1px;
 color: rgb(37,37,37);
 font-size: 0.80rem;
 font-weight: bold;
@@ -53,37 +56,39 @@ const Link = styled.a`
 `;
 
 
-const Recommendations = ({ keywords }) => {
-  const [recommendations, setRecommendations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchRecommendations = async () => {
-      try {
-        const response = await fetch('http://127.0.0.1:5000/api/recommend/', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ keywords }),
-          });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch recommendations: ${response.status}`);
+const Recommendations = ({ keywords, recommendations: propRecommendations }) => {
+    const [recommendations, setRecommendations] = useState(propRecommendations || []);
+    const [loading, setLoading] = useState(!propRecommendations);
+    const [error, setError] = useState(null);
+  
+    useEffect(() => {
+      if (!propRecommendations) {
+        const fetchRecommendations = async () => {
+          try {
+            const response = await fetch('http://127.0.0.1:5000/api/recommend/', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ keywords }),
+            });
+            if (!response.ok) {
+              throw new Error(`Failed to fetch recommendations: ${response.status}`);
+            }
+            const data = await response.json();
+            setRecommendations(data);
+          } catch (err) {
+            setError(err.message);
+          } finally {
+            setLoading(false);
+          }
+        };
+  
+        if (keywords.length > 0) {
+          fetchRecommendations();
         }
-        const data = await response.json();
-        setRecommendations(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    if (keywords.length > 0) {
-      fetchRecommendations();
-    }
-  }, [keywords]);
+    }, [keywords, propRecommendations]);
 
   if (loading) return <p>Loading recommendations...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -91,7 +96,7 @@ const Recommendations = ({ keywords }) => {
 
   return (
     <RecommendationsContainer>
-      <Title>Recommended Papers</Title>
+      <Title>Recommended/Related Papers</Title>
       {recommendations.map((rec, index) => (
         <RecommendationItem key={index}>
           <PaperTitle>{rec.title}</PaperTitle>
