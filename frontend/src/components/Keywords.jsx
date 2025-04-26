@@ -10,8 +10,8 @@ const Section = styled.div`
   background-color:rgb(37, 37, 37);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  // margin-top: 20px;
-  width:125%;
+  margin-top: 20px; 
+  width:97.5%;
   font-family: "Montserrat", serif;
   border: 0.5px #5f5f5f solid;
 

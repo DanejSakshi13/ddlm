@@ -1,10 +1,13 @@
+
+
+// perfect code that extracts in secions wise 11/4/25
 // import React from "react";
 // import styled from "styled-components";
 
 // const FiguresContainer = styled.div`
 //   margin-top: 20px;
 //   padding: 15px;
-//   background-color:rgb(37, 37, 37);
+//   background-color: rgb(37, 37, 37);
 //   border-radius: 8px;
 //   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 //   border: 0.5px #5f5f5f solid;
@@ -14,8 +17,8 @@
 //   font-family: "Montserrat", serif;
 //   margin-bottom: 10px;
 //   color: white;
-//     font-size: 1rem;
-//     margin-top:10px;
+//   font-size: 1rem;
+//   margin-top: 10px;
 // `;
 
 // const ImageGrid = styled.div`
@@ -30,6 +33,7 @@
 //   align-items: center;
 //   border: 1px white solid;
 //   background-color: white;
+//   padding: 5px;
 // `;
 
 // const FigureImage = styled.img`
@@ -47,35 +51,24 @@
 //   text-align: center;
 // `;
 
-// const FiguresExtracted = ({ images }) => {
-//   // Function to convert base64 to Blob URL
-//   const base64ToBlobUrl = (base64String) => {
-//     const byteCharacters = atob(base64String);
-//     const byteNumbers = new Array(byteCharacters.length);
-//     for (let i = 0; i < byteCharacters.length; i++) {
-//       byteNumbers[i] = byteCharacters.charCodeAt(i);
-//     }
-//     const byteArray = new Uint8Array(byteNumbers);
-//     const blob = new Blob([byteArray], { type: "image/png" });
-//     return URL.createObjectURL(blob);
-//   };
-
-//   if (!images || images.length === 0) return null;
+// const FiguresExtracted = ({ visualContent }) => {
+//   if (!visualContent || visualContent.length === 0) {
+//     return null;
+//   }
 
 //   return (
 //     <FiguresContainer>
-//       <FiguresTitle>Extracted Figures</FiguresTitle>
+//       <FiguresTitle>Extracted Visual Content</FiguresTitle>
 //       <ImageGrid>
-//         {images.map((image, index) => {
-//           // Handle base64 strings and convert to data URL or Blob URL
-//           const src = image.image.startsWith("data:image")
-//             ? image.image // Already a data URL
-//             : `data:image/png;base64,${image.image}`; // Convert base64 to data URL
-//           // Alternatively: const src = base64ToBlobUrl(image.image); // Use Blob URL if preferred
+//         {visualContent.map((item, index) => {
+//           // Ensure base64 string is prefixed correctly
+//           const src = item.image.startsWith("data:image")
+//             ? item.image
+//             : `data:image/png;base64,${item.image}`;
 //           return (
 //             <FigureItem key={index}>
-//               <FigureImage src={src} alt={image.name} />
-//               <FigureCaption>{image.name}</FigureCaption>
+//               <FigureImage src={src} alt={item.name} onError={() => console.error(`Failed to load image: ${item.name}`)} />
+//               <FigureCaption>{item.name}</FigureCaption>
 //             </FigureItem>
 //           );
 //         })}
@@ -98,13 +91,6 @@
 
 
 
-
-
-
-
-
-
-// perfect perfect perfect 11/4/25
 import React from "react";
 import styled from "styled-components";
 
@@ -165,13 +151,15 @@ const FiguresExtracted = ({ visualContent }) => {
       <FiguresTitle>Extracted Visual Content</FiguresTitle>
       <ImageGrid>
         {visualContent.map((item, index) => {
-          // Ensure base64 string is prefixed correctly
-          const src = item.image.startsWith("data:image")
-            ? item.image
-            : `data:image/png;base64,${item.image}`;
+          // Add base64 prefix for proper image rendering
+          const src = `data:image/png;base64,${item.image}`;
           return (
             <FigureItem key={index}>
-              <FigureImage src={src} alt={item.name} onError={() => console.error(`Failed to load image: ${item.name}`)} />
+              <FigureImage
+                src={src}
+                alt={item.name}
+                onError={(e) => console.error(`Failed to load image: ${item.name}`, e)}
+              />
               <FigureCaption>{item.name}</FigureCaption>
             </FigureItem>
           );
@@ -182,11 +170,6 @@ const FiguresExtracted = ({ visualContent }) => {
 };
 
 export default FiguresExtracted;
-
-
-
-
-
 
 
 

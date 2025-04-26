@@ -34,6 +34,7 @@
 
 
 
+// npx vite --debug  
 
 
 import React from 'react';

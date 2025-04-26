@@ -257,16 +257,660 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# works well but over extracintg - 12/4/25
+# from flask import Blueprint, request, jsonify
+# from PyPDF2 import PdfReader
+# from pdf2image import convert_from_bytes
+# import numpy as np
+# import io
+# import base64
+# import cv2
+# import logging
+# from PIL import Image
+
+# logging.basicConfig(level=logging.DEBUG)
+# logger = logging.getLogger(__name__)
+# logging.getLogger('PIL').setLevel(logging.INFO)
+
+# image_extractor_bp = Blueprint('image_extractor_bp', __name__)
+
+# def extract_images_from_pdf(file_bytes):
+#     """Extract embedded images from PDF, filtering small/irrelevant ones."""
+#     images = []
+#     pdf = PdfReader(io.BytesIO(file_bytes))
+#     for page_num, page in enumerate(pdf.pages):
+#         if '/Resources' in page and '/XObject' in page['/Resources']:
+#             x_objects = page['/Resources']['/XObject'].get_object()
+#             for obj in x_objects:
+#                 if x_objects[obj]['/Subtype'] == '/Image':
+#                     try:
+#                         data = x_objects[obj].get_data()
+#                         img = Image.open(io.BytesIO(data))
+#                         # Filter out very small images that are likely UI elements
+#                         if img.width < 50 or img.height < 50:
+#                             logger.debug(f"Skipped small image on page {page_num + 1}: {img.width}x{img.height}")
+#                             continue
+#                         img_byte_arr = io.BytesIO()
+#                         img.save(img_byte_arr, format='PNG')
+#                         images.append({
+#                             'page': page_num + 1,
+#                             'name': f'image_{page_num}_{len(images)}',
+#                             'image': img_byte_arr.getvalue(),
+#                             'width': img.width,
+#                             'height': img.height
+#                         })
+#                         logger.info(f"Extracted embedded image from page {page_num + 1}: {img.width}x{img.height}")
+#                     except Exception as e:
+#                         logger.error(f"Error processing XObject image on page {page_num + 1}: {e}")
+#     logger.info(f"Extracted {len(images)} embedded images from PDF")
+#     print(f"Extracted {len(images)} embedded images from PDF")
+#     return images
+
+# def merge_overlapping_contours(contours, threshold=0.3):
+#     """Merge contours that significantly overlap to prevent fragmenting images."""
+#     if not contours:
+#         return []
+    
+#     # Convert contours to bounding boxes
+#     bounding_boxes = [cv2.boundingRect(contour) for contour in contours]
+#     merged_boxes = []
+    
+#     while bounding_boxes:
+#         # Take the largest box as reference
+#         current_box = max(bounding_boxes, key=lambda box: box[2] * box[3])
+#         bounding_boxes.remove(current_box)
+        
+#         x1, y1, w1, h1 = current_box
+#         merged = True
+        
+#         while merged:
+#             merged = False
+#             i = 0
+#             while i < len(bounding_boxes):
+#                 x2, y2, w2, h2 = bounding_boxes[i]
+                
+#                 # Calculate the area of overlap
+#                 x_overlap = max(0, min(x1 + w1, x2 + w2) - max(x1, x2))
+#                 y_overlap = max(0, min(y1 + h1, y2 + h2) - max(y1, y2))
+#                 overlap_area = x_overlap * y_overlap
+                
+#                 # Calculate areas of both boxes
+#                 area1 = w1 * h1
+#                 area2 = w2 * h2
+                
+#                 # If overlapping beyond threshold, merge them
+#                 if overlap_area > threshold * min(area1, area2):
+#                     # Merge boxes by taking the union
+#                     x = min(x1, x2)
+#                     y = min(y1, y2)
+#                     w = max(x1 + w1, x2 + w2) - x
+#                     h = max(y1 + h1, y2 + h2) - y
+                    
+#                     # Update current box
+#                     x1, y1, w1, h1 = x, y, w, h
+                    
+#                     # Remove the merged box
+#                     bounding_boxes.pop(i)
+#                     merged = True
+#                 else:
+#                     i += 1
+        
+#         merged_boxes.append((x1, y1, w1, h1))
+    
+#     return merged_boxes
+
+# def detect_tables_and_figures(image, page_num):
+#     """Detect tables and figures with refined parameters."""
+#     tables = []
+#     figures = []
+    
+#     # Convert PIL Image to OpenCV format
+#     cv_image = np.array(image)
+#     height, width = cv_image.shape[:2]
+    
+#     # Skip processing if image is too small
+#     if width < 100 or height < 100:
+#         logger.warning(f"Image on page {page_num + 1} too small: {width}x{height}")
+#         return tables, figures
+    
+#     gray = cv2.cvtColor(cv_image, cv2.COLOR_RGB2GRAY)
+#     _, binary = cv2.threshold(gray, 180, 255, cv2.THRESH_BINARY_INV)
+
+#     # Table detection
+#     hor_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(width/30), 1))
+#     vert_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, int(height/30)))
+    
+#     horizontal_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, hor_kernel, iterations=2)
+#     vertical_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, vert_kernel, iterations=2)
+#     table_structure = cv2.add(horizontal_lines, vertical_lines)
+    
+#     # Dilate to connect nearby lines
+#     kernel = np.ones((3, 3), np.uint8)
+#     table_structure = cv2.dilate(table_structure, kernel, iterations=1)
+    
+#     # Find table contours
+#     contours, _ = cv2.findContours(table_structure, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#     table_contours = []
+    
+#     for contour in contours:
+#         x, y, w, h = cv2.boundingRect(contour)
+#         area = w * h
+#         if w > 150 and h > 100 and area > 15000:  # Filter by minimum size
+#             aspect_ratio = w / h
+#             if 0.5 < aspect_ratio < 4.0:  # Tables can be wide
+#                 table_contours.append(contour)
+    
+#     # Merge overlapping table contours
+#     merged_table_boxes = merge_overlapping_contours(table_contours)
+    
+#     for (x, y, w, h) in merged_table_boxes:
+#         # Ensure the box is within image bounds
+#         x = max(0, x)
+#         y = max(0, y)
+#         w = min(width - x, w)
+#         h = min(height - y, h)
+        
+#         if w > 0 and h > 0:
+#             crop = image.crop((x, y, x + w, y + h))
+#             img_byte_arr = io.BytesIO()
+#             crop.save(img_byte_arr, format='PNG')
+#             tables.append({
+#                 'page': page_num + 1,
+#                 'name': f'table_{page_num}_{len(tables)}',
+#                 'image': img_byte_arr.getvalue(),
+#                 'width': w,
+#                 'height': h
+#             })
+#             logger.info(f"Detected table on page {page_num + 1}: {w}x{h}")
+
+#     # Figure detection with improved parameters
+#     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+#     edges = cv2.Canny(blurred, 50, 150)
+    
+#     # Dilate edges to connect nearby components
+#     dilated_edges = cv2.dilate(edges, kernel, iterations=1)
+    
+#     # Find figure contours
+#     contours, _ = cv2.findContours(dilated_edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#     figure_contours = []
+    
+#     for contour in contours:
+#         x, y, w, h = cv2.boundingRect(contour)
+#         area = w * h
+#         if w > 100 and h > 100 and area > 10000:  # Filter by minimum size
+#             aspect_ratio = w / h
+#             if 0.5 < aspect_ratio < 2.5:  # Reasonable aspect ratio for figures
+#                 roi = gray[y:y+h, x:x+w]
+#                 if roi.size > 0:  # Ensure ROI is not empty
+#                     # Calculate edge density safely
+#                     try:
+#                         roi_edges = cv2.Canny(roi, 50, 150)
+#                         edge_density = cv2.countNonZero(roi_edges) / area
+#                         if edge_density > 0.01:  # Has sufficient edge features
+#                             figure_contours.append(contour)
+#                     except Exception as e:
+#                         logger.warning(f"Error calculating edge density: {e}")
+#                         # Still include the contour if we can't calculate edge density
+#                         figure_contours.append(contour)
+    
+#     # Merge overlapping figure contours
+#     merged_figure_boxes = merge_overlapping_contours(figure_contours)
+    
+#     for (x, y, w, h) in merged_figure_boxes:
+#         # Ensure the box is within image bounds
+#         x = max(0, x)
+#         y = max(0, y)
+#         w = min(width - x, w)
+#         h = min(height - y, h)
+        
+#         if w > 0 and h > 0:
+#             roi = gray[y:y+h, x:x+w]
+#             if roi.size > 0:
+#                 # Calculate edge density safely for logging
+#                 try:
+#                     roi_edges = cv2.Canny(roi, 50, 150)
+#                     edge_density = cv2.countNonZero(roi_edges) / (w * h)
+#                 except Exception:
+#                     edge_density = 0.0
+                
+#                 crop = image.crop((x, y, x + w, y + h))
+#                 img_byte_arr = io.BytesIO()
+#                 crop.save(img_byte_arr, format='PNG')
+#                 figures.append({
+#                     'page': page_num + 1,
+#                     'name': f'figure_{page_num}_{len(figures)}',
+#                     'image': img_byte_arr.getvalue(),
+#                     'width': w,
+#                     'height': h,
+#                     'edge_density': float(edge_density)  # Convert to float for JSON serialization
+#                 })
+#                 logger.info(f"Detected figure on page {page_num + 1}: {w}x{h}, edge_density: {edge_density:.4f}")
+
+#     # Filter out figures that significantly overlap with tables
+#     non_overlapping_figures = []
+#     for figure in figures:
+#         figure_box = (0, 0, figure['width'], figure['height'])  # Simplified for comparison
+#         overlaps_with_table = False
+        
+#         for table in tables:
+#             table_box = (0, 0, table['width'], table['height'])  # Simplified for comparison
+#             if calculate_overlap(figure_box, table_box) > 0.7:  # If overlap is significant
+#                 overlaps_with_table = True
+#                 break
+        
+#         if not overlaps_with_table:
+#             non_overlapping_figures.append(figure)
+    
+#     logger.debug(f"Page {page_num + 1}: Extracted {len(tables)} tables, {len(non_overlapping_figures)} figures")
+#     print(f"Page {page_num + 1}: Extracted {len(tables)} tables, {len(non_overlapping_figures)} figures")
+#     return tables, non_overlapping_figures
+
+
+
+
+
+# def calculate_overlap(box1, box2):
+#     """Calculate overlap ratio between two boxes."""
+#     x1, y1, w1, h1 = box1
+#     x2, y2, w2, h2 = box2
+    
+#     # Calculate intersection area
+#     x_overlap = max(0, min(x1 + w1, x2 + w2) - max(x1, x2))
+#     y_overlap = max(0, min(y1 + h1, y2 + h2) - max(y1, y2))
+#     intersection = x_overlap * y_overlap
+    
+#     # Calculate union area
+#     area1 = w1 * h1
+#     area2 = w2 * h2
+#     union = area1 + area2 - intersection
+    
+#     # Return overlap ratio
+#     return intersection / union if union > 0 else 0
+
+# def process_pdf(file_bytes):
+#     """Process PDF to extract tables, images, and figures."""
+#     results = {
+#         "images": [],
+#         "tables": [],
+#         "figures": []
+#     }
+#     try:
+#         logger.info("Extracting embedded images with PyPDF2")
+#         embedded_images = extract_images_from_pdf(file_bytes)
+#         for img in embedded_images:
+#             encoded_img = base64.b64encode(img["image"]).decode('utf-8')
+#             results["images"].append({
+#                 "page": img["page"],
+#                 "name": img["name"],
+#                 "image": encoded_img,
+#                 "width": img["width"],
+#                 "height": img["height"]
+#             })
+
+#         logger.info("Rendering pages with pdf2image")
+#         pages = convert_from_bytes(file_bytes, dpi=300)
+#         logger.info(f"Rendered {len(pages)} pages")
+#         print(f"Rendered {len(pages)} pages")
+
+#         for page_num, page_img in enumerate(pages):
+#             try:
+#                 tables, figures = detect_tables_and_figures(page_img, page_num)
+                
+#                 for table in tables:
+#                     encoded_img = base64.b64encode(table["image"]).decode('utf-8')
+#                     results["tables"].append({
+#                         "page": table["page"],
+#                         "name": table["name"],
+#                         "image": encoded_img,
+#                         "width": table["width"],
+#                         "height": table["height"]
+#                     })
+                
+#                 for figure in figures:
+#                     # Remove edge_density from the figure object before encoding
+#                     if "edge_density" in figure:
+#                         del figure["edge_density"]
+                    
+#                     encoded_img = base64.b64encode(figure["image"]).decode('utf-8')
+#                     results["figures"].append({
+#                         "page": figure["page"],
+#                         "name": figure["name"],
+#                         "image": encoded_img,
+#                         "width": figure["width"],
+#                         "height": figure["height"]
+#                     })
+#             except Exception as e:
+#                 logger.error(f"Error processing page {page_num + 1}: {e}")
+#                 continue  # Skip this page but continue processing others
+
+#         total_tables = len(results["tables"])
+#         total_images = len(results["images"])
+#         total_figures = len(results["figures"])
+#         logger.info(f"Extraction summary: {total_tables} tables, {total_images} images, {total_figures} figures")
+#         print(f"Extraction summary: {total_tables} tables, {total_images} images, {total_figures} figures")
+#         if not any([total_tables, total_images, total_figures]):
+#             results["warning"] = "No content found in the PDF"
+#             logger.warning("No content extracted from PDF")
+#     except Exception as e:
+#         logger.error(f"Error processing PDF: {e}")
+#         print(f"Error processing PDF: {e}")
+#         return {"error": f"Failed to process PDF: {str(e)}"}
+#     return results
+
+# @image_extractor_bp.route('/extract-images', methods=['POST'])
+# def extract_images():
+#     """Endpoint to extract all visual content."""
+#     try:
+#         if 'file' not in request.files:
+#             logger.error("No file provided")
+#             return jsonify({"error": "No file provided"}), 400
+
+#         file = request.files['file']
+#         if not file.filename.lower().endswith('.pdf'):
+#             logger.error(f"Invalid file type: {file.filename}")
+#             return jsonify({"error": "Please upload a PDF file"}), 400
+
+#         file_bytes = file.read()
+#         if not file_bytes:
+#             logger.error("Empty file uploaded")
+#             return jsonify({"error": "Empty file uploaded"}), 400
+
+#         logger.info(f"Processing PDF: {file.filename}")
+#         results = process_pdf(file_bytes)
+        
+#         if "error" in results:
+#             logger.error(f"Error in results: {results['error']}")
+#             return jsonify(results), 500
+        
+#         logger.info(f"API response: Extracted {len(results['tables'])} tables, {len(results['images'])} images, {len(results['figures'])} figures")
+#         return jsonify(results), 200
+#     except Exception as e:
+#         logger.error(f"Unexpected error: {e}")
+#         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# extracts correctly but giving duplicates
+# from flask import Blueprint, request, jsonify
+# import io
+# import base64
+# import logging
+# from PyPDF2 import PdfReader
+# from pdf2image import convert_from_bytes
+# from PIL import Image
+# import numpy as np
+# import cv2
+# import imagehash  # Add this for image hashing
+
+# # Set up logging
+# logging.basicConfig(level=logging.DEBUG)
+# logger = logging.getLogger(__name__)
+# logging.getLogger('PIL').setLevel(logging.INFO)
+
+# image_extractor_bp = Blueprint('image_extractor_bp', __name__)
+
+# def extract_images_from_pdf(file_bytes):
+#     """Extract embedded images from PDF."""
+#     images = []
+#     try:
+#         pdf = PdfReader(io.BytesIO(file_bytes))
+#         for page_num, page in enumerate(pdf.pages):
+#             try:
+#                 # Extract images from /XObject resources
+#                 if '/Resources' in page and '/XObject' in page['/Resources']:
+#                     x_objects = page['/Resources']['/XObject'].get_object()
+#                     for obj in x_objects:
+#                         try:
+#                             if x_objects[obj]['/Subtype'] == '/Image':
+#                                 try:
+#                                     data = x_objects[obj].get_data()
+#                                     img = Image.open(io.BytesIO(data))
+#                                     img_byte_arr = io.BytesIO()
+#                                     img.save(img_byte_arr, format='PNG')
+#                                     images.append({
+#                                         'page': page_num + 1,
+#                                         'name': f'image_{page_num}_{len(images)}',
+#                                         'image': img_byte_arr.getvalue()
+#                                     })
+#                                     logger.info(f"Extracted embedded image from page {page_num + 1}")
+#                                 except Exception as e:
+#                                     logger.error(f"Error processing image data on page {page_num + 1}: {e}")
+#                                     continue
+#                         except Exception as e:
+#                             logger.error(f"Error checking image subtype on page {page_num + 1}: {e}")
+#                             continue
+#             except Exception as e:
+#                 logger.error(f"Error processing page {page_num + 1}: {e}")
+#                 continue
+#     except Exception as e:
+#         logger.error(f"Error reading PDF: {e}")
+    
+#     logger.info(f"Extracted {len(images)} embedded images from PDF")
+#     return images
+
+# def detect_tables_with_lines(image, page_num):
+#     """Detect tables using line-based morphology with deduplication."""
+#     tables = []
+#     seen_hashes = set()  # To track unique images by hash
+#     try:
+#         gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+#         _, binary = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
+
+#         # Horizontal and vertical kernels for detecting table lines
+#         hor_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (40, 1))
+#         vert_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 40))
+#         horizontal_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, hor_kernel, iterations=2)
+#         vertical_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, vert_kernel, iterations=2)
+
+#         # Combine lines to form table structure
+#         table_structure = cv2.add(horizontal_lines, vertical_lines)
+#         contours, _ = cv2.findContours(table_structure, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+#         for contour in contours:
+#             x, y, w, h = cv2.boundingRect(contour)
+#             if w > 200 and h > 80:  # Minimum size for tables
+#                 table_crop = image.crop((x, y, x + w, y + h))
+#                 img_byte_arr = io.BytesIO()
+#                 table_crop.save(img_byte_arr, format='PNG')
+#                 table_img = Image.open(img_byte_arr)
+#                 # Generate a perceptual hash of the image
+#                 img_hash = str(imagehash.average_hash(table_img))
+#                 if img_hash not in seen_hashes:
+#                     seen_hashes.add(img_hash)
+#                     tables.append({
+#                         'page': page_num + 1,
+#                         'name': f'table_{page_num}_{len(tables)}',
+#                         'image': img_byte_arr.getvalue()
+#                     })
+#                     logger.info(f"Detected unique table on page {page_num + 1}: {w}x{h}")
+#                 else:
+#                     logger.info(f"Skipped duplicate table on page {page_num + 1}: {w}x{h}")
+#     except Exception as e:
+#         logger.error(f"Error detecting tables on page {page_num + 1}: {e}")
+    
+#     return tables
+
+# def process_pdf(file_bytes):
+#     """Process PDF to extract all visual content into a single array."""
+#     results = {
+#         "visuals": []
+#     }
+#     try:
+#         logger.info("Extracting embedded images with PyPDF2")
+#         embedded_images = extract_images_from_pdf(file_bytes)
+#         results["visuals"].extend(embedded_images)
+
+#         logger.info("Rendering pages with pdf2image")
+#         pages = convert_from_bytes(file_bytes)
+#         logger.info(f"Rendered {len(pages)} pages")
+
+#         for page_num, page_img in enumerate(pages):
+#             try:
+#                 tables = detect_tables_with_lines(page_img, page_num)
+#                 results["visuals"].extend(tables)
+#             except Exception as e:
+#                 logger.error(f"Error processing page {page_num + 1}: {e}")
+#                 continue
+
+#         # Convert images to base64 (standard base64 encoding)
+#         for item in results["visuals"]:
+#             item["image"] = base64.b64encode(item["image"]).decode('utf-8')
+
+#         total_visuals = len(results["visuals"])
+#         logger.info(f"Extraction summary: {total_visuals} visual items")
+#         if not total_visuals:
+#             results["warning"] = "No visual content found in the PDF"
+#             logger.warning("No visual content extracted from PDF")
+#     except Exception as e:
+#         logger.error(f"Error processing PDF: {e}")
+#         return {"error": f"Failed to process PDF: {str(e)}"}
+    
+#     return results
+
+# @image_extractor_bp.route('/extract-images', methods=['POST'])
+# def extract_images():
+#     """Endpoint to extract all visual content."""
+#     try:
+#         if 'file' not in request.files:
+#             logger.error("No file provided")
+#             return jsonify({"error": "No file provided"}), 400
+
+#         file = request.files['file']
+#         if not file.filename.lower().endswith('.pdf'):
+#             logger.error(f"Invalid file type: {file.filename}")
+#             return jsonify({"error": "Please upload a PDF file"}), 400
+
+#         file_bytes = file.read()
+#         if not file_bytes:
+#             logger.error("Empty file uploaded")
+#             return jsonify({"error": "Empty file uploaded"}), 400
+
+#         logger.info(f"Processing PDF: {file.filename}")
+#         results = process_pdf(file_bytes)
+        
+#         if "error" in results:
+#             logger.error(f"Error in results: {results['error']}")
+#             return jsonify(results), 500
+        
+#         logger.info(f"API response: Extracted {len(results['visuals'])} visual items")
+#         return jsonify(results), 200
+#     except Exception as e:
+#         logger.error(f"Unexpected error: {e}")
+#         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 from flask import Blueprint, request, jsonify
-from PyPDF2 import PdfReader
-from pdf2image import convert_from_bytes
-import numpy as np
 import io
 import base64
-import cv2
 import logging
+from PyPDF2 import PdfReader
+from pdf2image import convert_from_bytes
 from PIL import Image
+import numpy as np
+import cv2
+import imagehash
 
+# Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logging.getLogger('PIL').setLevel(logging.INFO)
@@ -274,35 +918,42 @@ logging.getLogger('PIL').setLevel(logging.INFO)
 image_extractor_bp = Blueprint('image_extractor_bp', __name__)
 
 def extract_images_from_pdf(file_bytes):
-    """Extract embedded images from PDF, filtering small/irrelevant ones."""
+    """Extract embedded images from PDF."""
     images = []
-    pdf = PdfReader(io.BytesIO(file_bytes))
-    for page_num, page in enumerate(pdf.pages):
-        if '/Resources' in page and '/XObject' in page['/Resources']:
-            x_objects = page['/Resources']['/XObject'].get_object()
-            for obj in x_objects:
-                if x_objects[obj]['/Subtype'] == '/Image':
-                    try:
-                        data = x_objects[obj].get_data()
-                        img = Image.open(io.BytesIO(data))
-                        # Filter out very small images that are likely UI elements
-                        if img.width < 50 or img.height < 50:
-                            logger.debug(f"Skipped small image on page {page_num + 1}: {img.width}x{img.height}")
+    try:
+        pdf = PdfReader(io.BytesIO(file_bytes))
+        for page_num, page in enumerate(pdf.pages):
+            try:
+                # Extract images from /XObject resources
+                if '/Resources' in page and '/XObject' in page['/Resources']:
+                    x_objects = page['/Resources']['/XObject'].get_object()
+                    for obj in x_objects:
+                        try:
+                            if x_objects[obj]['/Subtype'] == '/Image':
+                                try:
+                                    data = x_objects[obj].get_data()
+                                    img = Image.open(io.BytesIO(data))
+                                    img_byte_arr = io.BytesIO()
+                                    img.save(img_byte_arr, format='PNG')
+                                    images.append({
+                                        'page': page_num + 1,
+                                        'name': f'image_{page_num}_{len(images)}',
+                                        'image': img_byte_arr.getvalue()
+                                    })
+                                    logger.info(f"Extracted embedded image from page {page_num + 1}")
+                                except Exception as e:
+                                    logger.error(f"Error processing image data on page {page_num + 1}: {e}")
+                                    continue
+                        except Exception as e:
+                            logger.error(f"Error checking image subtype on page {page_num + 1}: {e}")
                             continue
-                        img_byte_arr = io.BytesIO()
-                        img.save(img_byte_arr, format='PNG')
-                        images.append({
-                            'page': page_num + 1,
-                            'name': f'image_{page_num}_{len(images)}',
-                            'image': img_byte_arr.getvalue(),
-                            'width': img.width,
-                            'height': img.height
-                        })
-                        logger.info(f"Extracted embedded image from page {page_num + 1}: {img.width}x{img.height}")
-                    except Exception as e:
-                        logger.error(f"Error processing XObject image on page {page_num + 1}: {e}")
+            except Exception as e:
+                logger.error(f"Error processing page {page_num + 1}: {e}")
+                continue
+    except Exception as e:
+        logger.error(f"Error reading PDF: {e}")
+    
     logger.info(f"Extracted {len(images)} embedded images from PDF")
-    print(f"Extracted {len(images)} embedded images from PDF")
     return images
 
 def merge_overlapping_contours(contours, threshold=0.3):
@@ -310,15 +961,12 @@ def merge_overlapping_contours(contours, threshold=0.3):
     if not contours:
         return []
     
-    # Convert contours to bounding boxes
     bounding_boxes = [cv2.boundingRect(contour) for contour in contours]
     merged_boxes = []
     
     while bounding_boxes:
-        # Take the largest box as reference
-        current_box = max(bounding_boxes, key=lambda box: box[2] * box[3])
+        current_box = max(bounding_boxes, key=lambda box: box[2] * box[3])  # Largest area as reference
         bounding_boxes.remove(current_box)
-        
         x1, y1, w1, h1 = current_box
         merged = True
         
@@ -327,28 +975,20 @@ def merge_overlapping_contours(contours, threshold=0.3):
             i = 0
             while i < len(bounding_boxes):
                 x2, y2, w2, h2 = bounding_boxes[i]
-                
-                # Calculate the area of overlap
+                # Calculate intersection
                 x_overlap = max(0, min(x1 + w1, x2 + w2) - max(x1, x2))
                 y_overlap = max(0, min(y1 + h1, y2 + h2) - max(y1, y2))
-                overlap_area = x_overlap * y_overlap
-                
-                # Calculate areas of both boxes
+                intersection = x_overlap * y_overlap
                 area1 = w1 * h1
                 area2 = w2 * h2
+                overlap_ratio = intersection / min(area1, area2) if min(area1, area2) > 0 else 0
                 
-                # If overlapping beyond threshold, merge them
-                if overlap_area > threshold * min(area1, area2):
-                    # Merge boxes by taking the union
-                    x = min(x1, x2)
-                    y = min(y1, y2)
-                    w = max(x1 + w1, x2 + w2) - x
-                    h = max(y1 + h1, y2 + h2) - y
-                    
-                    # Update current box
-                    x1, y1, w1, h1 = x, y, w, h
-                    
-                    # Remove the merged box
+                if overlap_ratio > threshold:
+                    # Merge by taking the union
+                    x1 = min(x1, x2)
+                    y1 = min(y1, y2)
+                    w1 = max(x1 + w1, x2 + w2) - x1
+                    h1 = max(y1 + h1, y2 + h2) - y1
                     bounding_boxes.pop(i)
                     merged = True
                 else:
@@ -358,242 +998,87 @@ def merge_overlapping_contours(contours, threshold=0.3):
     
     return merged_boxes
 
-def detect_tables_and_figures(image, page_num):
-    """Detect tables and figures with refined parameters."""
+def detect_tables_with_lines(image, page_num):
+    """Detect tables using line-based morphology with improved deduplication."""
     tables = []
-    figures = []
-    
-    # Convert PIL Image to OpenCV format
-    cv_image = np.array(image)
-    height, width = cv_image.shape[:2]
-    
-    # Skip processing if image is too small
-    if width < 100 or height < 100:
-        logger.warning(f"Image on page {page_num + 1} too small: {width}x{height}")
-        return tables, figures
-    
-    gray = cv2.cvtColor(cv_image, cv2.COLOR_RGB2GRAY)
-    _, binary = cv2.threshold(gray, 180, 255, cv2.THRESH_BINARY_INV)
+    seen_hashes = set()  # To track unique images by hash
+    try:
+        gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+        _, binary = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
 
-    # Table detection
-    hor_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (int(width/30), 1))
-    vert_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, int(height/30)))
-    
-    horizontal_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, hor_kernel, iterations=2)
-    vertical_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, vert_kernel, iterations=2)
-    table_structure = cv2.add(horizontal_lines, vertical_lines)
-    
-    # Dilate to connect nearby lines
-    kernel = np.ones((3, 3), np.uint8)
-    table_structure = cv2.dilate(table_structure, kernel, iterations=1)
-    
-    # Find table contours
-    contours, _ = cv2.findContours(table_structure, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    table_contours = []
-    
-    for contour in contours:
-        x, y, w, h = cv2.boundingRect(contour)
-        area = w * h
-        if w > 150 and h > 100 and area > 15000:  # Filter by minimum size
-            aspect_ratio = w / h
-            if 0.5 < aspect_ratio < 4.0:  # Tables can be wide
-                table_contours.append(contour)
-    
-    # Merge overlapping table contours
-    merged_table_boxes = merge_overlapping_contours(table_contours)
-    
-    for (x, y, w, h) in merged_table_boxes:
-        # Ensure the box is within image bounds
-        x = max(0, x)
-        y = max(0, y)
-        w = min(width - x, w)
-        h = min(height - y, h)
-        
-        if w > 0 and h > 0:
-            crop = image.crop((x, y, x + w, y + h))
-            img_byte_arr = io.BytesIO()
-            crop.save(img_byte_arr, format='PNG')
-            tables.append({
-                'page': page_num + 1,
-                'name': f'table_{page_num}_{len(tables)}',
-                'image': img_byte_arr.getvalue(),
-                'width': w,
-                'height': h
-            })
-            logger.info(f"Detected table on page {page_num + 1}: {w}x{h}")
+        # Horizontal and vertical kernels for detecting table lines
+        hor_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (40, 1))
+        vert_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 40))
+        horizontal_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, hor_kernel, iterations=2)
+        vertical_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, vert_kernel, iterations=2)
 
-    # Figure detection with improved parameters
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    edges = cv2.Canny(blurred, 50, 150)
-    
-    # Dilate edges to connect nearby components
-    dilated_edges = cv2.dilate(edges, kernel, iterations=1)
-    
-    # Find figure contours
-    contours, _ = cv2.findContours(dilated_edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    figure_contours = []
-    
-    for contour in contours:
-        x, y, w, h = cv2.boundingRect(contour)
-        area = w * h
-        if w > 100 and h > 100 and area > 10000:  # Filter by minimum size
-            aspect_ratio = w / h
-            if 0.5 < aspect_ratio < 2.5:  # Reasonable aspect ratio for figures
-                roi = gray[y:y+h, x:x+w]
-                if roi.size > 0:  # Ensure ROI is not empty
-                    # Calculate edge density safely
-                    try:
-                        roi_edges = cv2.Canny(roi, 50, 150)
-                        edge_density = cv2.countNonZero(roi_edges) / area
-                        if edge_density > 0.01:  # Has sufficient edge features
-                            figure_contours.append(contour)
-                    except Exception as e:
-                        logger.warning(f"Error calculating edge density: {e}")
-                        # Still include the contour if we can't calculate edge density
-                        figure_contours.append(contour)
-    
-    # Merge overlapping figure contours
-    merged_figure_boxes = merge_overlapping_contours(figure_contours)
-    
-    for (x, y, w, h) in merged_figure_boxes:
-        # Ensure the box is within image bounds
-        x = max(0, x)
-        y = max(0, y)
-        w = min(width - x, w)
-        h = min(height - y, h)
-        
-        if w > 0 and h > 0:
-            roi = gray[y:y+h, x:x+w]
-            if roi.size > 0:
-                # Calculate edge density safely for logging
-                try:
-                    roi_edges = cv2.Canny(roi, 50, 150)
-                    edge_density = cv2.countNonZero(roi_edges) / (w * h)
-                except Exception:
-                    edge_density = 0.0
-                
-                crop = image.crop((x, y, x + w, y + h))
+        # Combine lines to form table structure
+        table_structure = cv2.add(horizontal_lines, vertical_lines)
+        contours, _ = cv2.findContours(table_structure, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Merge overlapping contours
+        merged_boxes = merge_overlapping_contours(contours)
+        logger.debug(f"Merged {len(contours)} contours into {len(merged_boxes)} boxes on page {page_num + 1}")
+
+        for x, y, w, h in merged_boxes:
+            if w > 200 and h > 80:  # Minimum size for tables
+                table_crop = image.crop((x, y, x + w, y + h))
                 img_byte_arr = io.BytesIO()
-                crop.save(img_byte_arr, format='PNG')
-                figures.append({
-                    'page': page_num + 1,
-                    'name': f'figure_{page_num}_{len(figures)}',
-                    'image': img_byte_arr.getvalue(),
-                    'width': w,
-                    'height': h,
-                    'edge_density': float(edge_density)  # Convert to float for JSON serialization
-                })
-                logger.info(f"Detected figure on page {page_num + 1}: {w}x{h}, edge_density: {edge_density:.4f}")
-
-    # Filter out figures that significantly overlap with tables
-    non_overlapping_figures = []
-    for figure in figures:
-        figure_box = (0, 0, figure['width'], figure['height'])  # Simplified for comparison
-        overlaps_with_table = False
-        
-        for table in tables:
-            table_box = (0, 0, table['width'], table['height'])  # Simplified for comparison
-            if calculate_overlap(figure_box, table_box) > 0.7:  # If overlap is significant
-                overlaps_with_table = True
-                break
-        
-        if not overlaps_with_table:
-            non_overlapping_figures.append(figure)
+                table_crop.save(img_byte_arr, format='PNG')
+                table_img = Image.open(img_byte_arr).resize((100, 100), Image.Resampling.LANCZOS)  # Normalize size
+                # Use perceptual hash with smaller size for better differentiation
+                img_hash = str(imagehash.phash(table_img, hash_size=16))
+                logger.debug(f"Table at {x}, {y}, {w}x{h} with hash: {img_hash}")
+                if img_hash not in seen_hashes:
+                    seen_hashes.add(img_hash)
+                    tables.append({
+                        'page': page_num + 1,
+                        'name': f'table_{page_num}_{len(tables)}',
+                        'image': img_byte_arr.getvalue()
+                    })
+                    logger.info(f"Detected unique table on page {page_num + 1}: {w}x{h}")
+                else:
+                    logger.info(f"Skipped duplicate table on page {page_num + 1}: {w}x{h}")
+    except Exception as e:
+        logger.error(f"Error detecting tables on page {page_num + 1}: {e}")
     
-    logger.debug(f"Page {page_num + 1}: Extracted {len(tables)} tables, {len(non_overlapping_figures)} figures")
-    print(f"Page {page_num + 1}: Extracted {len(tables)} tables, {len(non_overlapping_figures)} figures")
-    return tables, non_overlapping_figures
-
-
-
-
-
-def calculate_overlap(box1, box2):
-    """Calculate overlap ratio between two boxes."""
-    x1, y1, w1, h1 = box1
-    x2, y2, w2, h2 = box2
-    
-    # Calculate intersection area
-    x_overlap = max(0, min(x1 + w1, x2 + w2) - max(x1, x2))
-    y_overlap = max(0, min(y1 + h1, y2 + h2) - max(y1, y2))
-    intersection = x_overlap * y_overlap
-    
-    # Calculate union area
-    area1 = w1 * h1
-    area2 = w2 * h2
-    union = area1 + area2 - intersection
-    
-    # Return overlap ratio
-    return intersection / union if union > 0 else 0
+    return tables
 
 def process_pdf(file_bytes):
-    """Process PDF to extract tables, images, and figures."""
+    """Process PDF to extract all visual content into a single array."""
     results = {
-        "images": [],
-        "tables": [],
-        "figures": []
+        "visuals": []
     }
     try:
         logger.info("Extracting embedded images with PyPDF2")
         embedded_images = extract_images_from_pdf(file_bytes)
-        for img in embedded_images:
-            encoded_img = base64.b64encode(img["image"]).decode('utf-8')
-            results["images"].append({
-                "page": img["page"],
-                "name": img["name"],
-                "image": encoded_img,
-                "width": img["width"],
-                "height": img["height"]
-            })
+        results["visuals"].extend(embedded_images)
 
         logger.info("Rendering pages with pdf2image")
-        pages = convert_from_bytes(file_bytes, dpi=300)
+        pages = convert_from_bytes(file_bytes)
         logger.info(f"Rendered {len(pages)} pages")
-        print(f"Rendered {len(pages)} pages")
 
         for page_num, page_img in enumerate(pages):
             try:
-                tables, figures = detect_tables_and_figures(page_img, page_num)
-                
-                for table in tables:
-                    encoded_img = base64.b64encode(table["image"]).decode('utf-8')
-                    results["tables"].append({
-                        "page": table["page"],
-                        "name": table["name"],
-                        "image": encoded_img,
-                        "width": table["width"],
-                        "height": table["height"]
-                    })
-                
-                for figure in figures:
-                    # Remove edge_density from the figure object before encoding
-                    if "edge_density" in figure:
-                        del figure["edge_density"]
-                    
-                    encoded_img = base64.b64encode(figure["image"]).decode('utf-8')
-                    results["figures"].append({
-                        "page": figure["page"],
-                        "name": figure["name"],
-                        "image": encoded_img,
-                        "width": figure["width"],
-                        "height": figure["height"]
-                    })
+                tables = detect_tables_with_lines(page_img, page_num)
+                results["visuals"].extend(tables)
             except Exception as e:
                 logger.error(f"Error processing page {page_num + 1}: {e}")
-                continue  # Skip this page but continue processing others
+                continue
 
-        total_tables = len(results["tables"])
-        total_images = len(results["images"])
-        total_figures = len(results["figures"])
-        logger.info(f"Extraction summary: {total_tables} tables, {total_images} images, {total_figures} figures")
-        print(f"Extraction summary: {total_tables} tables, {total_images} images, {total_figures} figures")
-        if not any([total_tables, total_images, total_figures]):
-            results["warning"] = "No content found in the PDF"
-            logger.warning("No content extracted from PDF")
+        # Convert images to base64 (standard base64 encoding)
+        for item in results["visuals"]:
+            item["image"] = base64.b64encode(item["image"]).decode('utf-8')
+
+        total_visuals = len(results["visuals"])
+        logger.info(f"Extraction summary: {total_visuals} visual items")
+        if not total_visuals:
+            results["warning"] = "No visual content found in the PDF"
+            logger.warning("No visual content extracted from PDF")
     except Exception as e:
         logger.error(f"Error processing PDF: {e}")
-        print(f"Error processing PDF: {e}")
         return {"error": f"Failed to process PDF: {str(e)}"}
+    
     return results
 
 @image_extractor_bp.route('/extract-images', methods=['POST'])
@@ -621,11 +1106,84 @@ def extract_images():
             logger.error(f"Error in results: {results['error']}")
             return jsonify(results), 500
         
-        logger.info(f"API response: Extracted {len(results['tables'])} tables, {len(results['images'])} images, {len(results['figures'])} figures")
+        logger.info(f"API response: Extracted {len(results['visuals'])} visual items")
         return jsonify(results), 200
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

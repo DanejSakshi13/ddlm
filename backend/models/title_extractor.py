@@ -593,9 +593,14 @@
 # trying to fix it for edge cases
 from flask import Blueprint, request, jsonify
 import os
-import pdfplumber
+import fitz  # PyMuPDF
 from flask_cors import CORS
 import re
+import tempfile
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 title_extractor_bp = Blueprint("title_extractor", __name__)
 CORS(title_extractor_bp, resources={r"/extract-title": {
@@ -605,148 +610,120 @@ CORS(title_extractor_bp, resources={r"/extract-title": {
     "supports_credentials": True
 }})
 
-def is_conference_line(line):
-    """Detect lines likely to be conference names."""
-    line_lower = line.lower().strip()
-    conference_indicators = [
-        r"conference", r"ieee", r"international", r"workshop", r"symposium",
-        r"proceedings", r"\b\d{4}\b.*conference", r"^\d+(th|st|nd|rd)",
-        r"quantum computing", r"\b(qce|icml|neurips|iclr|aaai)\b"  # Common conference acronyms
-    ]
-    return any(re.search(pattern, line_lower) for pattern in conference_indicators)
-
-def is_author_line(line):
-    """Detect if a line contains author information."""
-    # Check for common author indicators
-    author_patterns = [
-        r"\b[A-Z][a-z]+ [A-Z][a-z]+\b",  # Standard name format: "John Doe"
-        r"\b[A-Z]\. [A-Z][a-z]+\b",      # Initial format: "J. Smith"
-        r"\b[A-Z][a-z]+ [A-Z]\.\b",      # Name with initial: "John S."
-        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,7}",  # Email pattern
-        r"university|institute|department|school|lab(oratory)?|corporation|inc\.|llc",  # Affiliations
-        r"google|microsoft|amazon|facebook|meta|apple|ibm|intel|nvidia"  # Tech companies
-    ]
-    
-    return any(re.search(pattern, line, re.IGNORECASE) for pattern in author_patterns)
-
-def extract_title_from_pdf(file_path, pages_to_scan=2):
-    """Extracts a research paper title (single-line or multi-line) while avoiding author names and conference names."""
+def extract_title_from_pdf(file_path, pages_to_scan=3):
+    """Extracts a research paper title (single-line or multi-line) while avoiding author names."""
     try:
-        with pdfplumber.open(file_path) as pdf:
-            if not pdf.pages:
-                print("No pages found in PDF")
-                return "Title could not be extracted."
+        doc = fitz.open(file_path)
 
-            # Check metadata first - this is often the most reliable source
-            metadata_title = pdf.metadata.get("Title", "").strip()
-            if metadata_title and len(metadata_title) > 5 and not is_conference_line(metadata_title):
-                print(f"Found title in metadata: '{metadata_title}'")
-                return metadata_title
+        # Check metadata first - often reliable
+        metadata_title = doc.metadata.get("title", "").strip()
+        if metadata_title and len(metadata_title) > 5:  # Ensure it's meaningful
+            logging.info(f"Found title in metadata: '{metadata_title}'")
+            return metadata_title
 
-            text = ""
-            # Extract text from the first few pages
-            for page_num in range(min(pages_to_scan, len(pdf.pages))):
-                page = pdf.pages[page_num]
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
+        text = ""
+        # Extract text from the first few pages
+        for page_num in range(min(pages_to_scan, len(doc))):
+            text += doc[page_num].get_text("text") + "\n"
 
-            if not text:
-                print("No text extracted from pages")
-                return "Title could not be extracted."
+        if not text:
+            logging.warning("No text extracted from PDF")
+            return "Title could not be extracted."
 
-            # Split text into lines and clean them
-            lines = [line.strip() for line in text.split("\n") if line.strip()]
-            
-            # Look for explicit title markers
-            for i, line in enumerate(lines[:10]):
-                if re.match(r"^\s*title\s*:\s*", line, re.IGNORECASE):
-                    # Found an explicit title marker - use the rest of the line or the next line
-                    title_text = re.sub(r"^\s*title\s*:\s*", "", line, re.IGNORECASE).strip()
-                    if not title_text and i+1 < len(lines):
-                        # If title marker is on its own line, use the next line as the title
-                        title_text = lines[i+1].strip()
-                    if title_text:
-                        return title_text
+        # Split text into lines
+        lines = text.split("\n")
 
-            # If no explicit title marker, try the structured approach
-            title_lines = []
-            i = 0
-            
-            # Skip header/conference info at the beginning
-            while i < min(5, len(lines)) and (is_conference_line(lines[i]) or lines[i].isupper() or len(lines[i]) < 10):
-                i += 1
-            
-            # Collect potential title lines
-            start_idx = i
-            while i < min(15, len(lines)):
-                line = lines[i]
-                
-                # Stop if we hit author information
-                if is_author_line(line):
-                    break
-                
-                # Stop if line is too short (likely not part of title)
-                if len(line) < 3:
-                    break
-                
-                # Stop if we hit an abstract or other section
-                if re.match(r"^\s*(abstract|introduction|keywords)\s*:?\s*$", line, re.IGNORECASE):
-                    break
-                
-                # Add line to potential title
-                title_lines.append(line)
-                i += 1
-                
-                # If we've collected more than 3 lines, stop (titles rarely longer than 3 lines)
-                if len(title_lines) >= 3:
-                    break
-            
-            # If we didn't collect any title lines, revert to old approach - use the first substantial line
-            if not title_lines and len(lines) > 0:
-                # Find the first line that isn't a conference name and is substantial
-                for line in lines[:10]:
-                    if not is_conference_line(line) and len(line) > 10:
-                        title_lines = [line]
-                        break
-            
-            # Join collected title lines
-            title = " ".join(title_lines).strip()
-            
-            # Clean up the title
-            title = re.sub(r"^\s*title\s*:\s*", "", title, re.IGNORECASE).strip()
-            
-            # Additional checks for title quality
-            if not title or len(title) < 5:
-                print("No suitable title found")
-                return "Title could not be extracted."
-                
-            print(f"Extracted title: '{title}'")
-            return title
+        title_lines = []
+        found_title = False  # Flag to track when title extraction starts
+
+        # Keywords that indicate author names or affiliations
+        stop_words = {
+            "google", "university", "institute", "research", "department", 
+            "lab", "school", "corporation", "inc.", "llc", "microsoft", 
+            "amazon", "facebook", "meta", "apple", "ibm", "intel", "nvidia"
+        }
+        author_name_pattern = re.compile(r"\b[A-Z][a-z]+ [A-Z][a-z]+\b")  # Detects names like "John Doe"
+
+        for line in lines:
+            clean_line = line.strip()
+
+            # Skip empty lines before title starts
+            if not clean_line and not found_title:
+                continue
+
+            # Remove special characters and ordinals (e.g., 1st, 2nd, *, †, ‡)
+            clean_line = re.sub(r"[*†‡]|\b\d{1,2}(st|nd|rd|th)?\b", "", clean_line).strip()
+
+            # Skip lines that are just numbers (e.g., page numbers)
+            if clean_line.isdigit():
+                continue
+
+            # Stop at email addresses (common after author names)
+            if re.search(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b", clean_line):
+                break
+
+            # Stop if a typical author-related keyword is found
+            if any(word in clean_line.lower() for word in stop_words):
+                break
+
+            # Stop if an author name pattern (e.g., "Yucheng Shi") is detected
+            if author_name_pattern.search(clean_line):
+                break
+
+            # Allow uppercase titles (some papers use ALL CAPS)
+            if clean_line and (not clean_line.isupper() or len(clean_line) > 10):
+                title_lines.append(clean_line)
+                found_title = True
+
+            # Stop after an empty line once title is found
+            if found_title and not clean_line:
+                break
+
+        # Join extracted lines to form the final title
+        title = " ".join(title_lines).strip()
+
+        # Additional checks for title quality
+        if not title or len(title) < 5:
+            logging.warning("No suitable title found")
+            return "Title could not be extracted."
+
+        logging.info(f"Extracted title: '{title}'")
+        return title
 
     except Exception as e:
-        print(f"Error extracting title: {str(e)}")
+        logging.error(f"Error extracting title: {str(e)}")
         return f"Error extracting title: {str(e)}"
+    finally:
+        if 'doc' in locals():
+            doc.close()
 
 @title_extractor_bp.route("/extract-title", methods=["POST"])
 def extract_title():
+    """Endpoint to extract title from a PDF."""
     if "file" not in request.files:
+        logging.error("No file uploaded")
         return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files["file"]
     if file.filename == "":
+        logging.error("No selected file")
         return jsonify({"error": "No selected file"}), 400
 
-    file_path = os.path.join("uploads", file.filename)
-    os.makedirs("uploads", exist_ok=True)
-    file.save(file_path)
-
     try:
-        title = extract_title_from_pdf(file_path)
-        print(f"Final extracted title for {file.filename}: '{title}'")
-        return jsonify({"title": title}), 200
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            file.save(tmp.name)
+            file_path = tmp.name
+
+        try:
+            title = extract_title_from_pdf(file_path)
+            logging.info(f"Final extracted title for {file.filename}: '{title}'")
+            return jsonify({"title": title}), 200
+        except Exception as e:
+            logging.error(f"Failed to process PDF: {str(e)}")
+            return jsonify({"error": f"Error processing file: {str(e)}"}), 500
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logging.error(f"Error handling file: {str(e)}")
+        return jsonify({"error": f"Error processing file: {str(e)}"}), 500
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)

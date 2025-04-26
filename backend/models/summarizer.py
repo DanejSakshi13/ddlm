@@ -81,8 +81,28 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # # working code
-# 5/4/25
+# 24/4/25
 from flask import Blueprint, request, jsonify
 import os
 import pdfplumber
@@ -186,6 +206,582 @@ def summarize_pdf():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# trying using sumy iwthout hugging faec
+# from flask import Blueprint, request, jsonify
+# import os
+# import pdfplumber
+# import sys
+
+# try:
+#     import nltk
+#     nltk.data.path.append(r'd:\sakshi\final year project\ddlm-backup\backend\venv\nltk_data')
+#     nltk.download('punkt', quiet=True, download_dir=r'd:\sakshi\final year project\ddlm-backup\backend\venv\nltk_data')
+#     print(f"nltk version: {nltk.__version__}", file=sys.stderr)
+#     print(f"nltk data path: {nltk.data.path}", file=sys.stderr)
+#     from sumy.parsers.plaintext import PlaintextParser
+#     from sumy.nlp.tokenizers import Tokenizer
+#     from sumy.summarizers.textrank import TextRankSummarizer
+#     print(f"sumy modules imported successfully", file=sys.stderr)
+# except ImportError as e:
+#     print(f"Import error details: {str(e)}", file=sys.stderr)
+#     raise ImportError("Required library 'sumy' or 'nltk' is not installed or misconfigured. Please verify sumy installation at d:\\sakshi\\final year project\\ddlm-backup\\backend\\venv\\lib\\site-packages\\sumy and ensure nltk.punkt is in d:\\sakshi\\final year project\\ddlm-backup\\backend\\venv\\nltk_data") from e
+
+# summarizer_bp = Blueprint("summarizer", __name__)
+
+# def extract_text_from_pdf(file_path):
+#     try:
+#         with pdfplumber.open(file_path) as pdf:
+#             return "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
+#     except Exception as e:
+#         return str(e)
+
+# def summarize_text_with_textrank(text, sentence_count=5):
+#     parser = PlaintextParser.from_string(text, Tokenizer("english"))
+#     summarizer = TextRankSummarizer()
+#     summary = summarizer(parser.document, sentence_count)
+#     return "\n".join([f"{i+1}. {str(sentence)}" for i, sentence in enumerate(summary)])
+
+# @summarizer_bp.route('/summarize-pdf', methods=['POST'])
+# def summarize_pdf():
+#     if 'file' not in request.files:
+#         return jsonify({"error": "No file uploaded"}), 400
+
+#     file = request.files['file']
+#     word_limit = int(request.form.get('word_limit', 150))
+
+#     if file.filename == '':
+#         return jsonify({"error": "No selected file"}), 400
+
+#     try:
+#         file_path = os.path.join('uploads', file.filename)
+#         os.makedirs('uploads', exist_ok=True)
+#         file.save(file_path)
+
+#         text = extract_text_from_pdf(file_path)
+#         if not text:
+#             return jsonify({"error": "No text found in PDF"}), 500
+
+#         summary_points = summarize_text_with_textrank(text, 5)
+#         return jsonify({"summary": summary_points}), 200
+
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
+#     finally:
+#         if os.path.exists(file_path):
+#             os.remove(file_path)
 
 
 

@@ -1665,7 +1665,7 @@ const Sidebar = ({ isOpen, toggleSidebar, setSelectedAnalysis }) => {
         const lastThree = [highlightedAnalysis, ...otherAnalyses.slice(-2)].filter(Boolean);
         setAnalyses(lastThree);
       } else {
-        const lastThree = allAnalyses.slice(-3).reverse(); // Last 3 in reverse chronological order
+        const lastThree = allAnalyses.slice(-4).reverse(); // Last 3 in reverse chronological order
         setAnalyses(lastThree);
       }
       console.log("Rendering Sidebar with analyses:", analyses);
